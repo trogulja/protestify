@@ -1,0 +1,48 @@
+{
+  "name": "protestify",
+  "version": "0.0.1",
+  "description": "A companion app for productive.io cucumber-js tests",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "dev:app": "tauri dev",
+    "build": "vite build",
+    "build:app": "./bin/build.sh",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "tauri": "tauri"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-clipboard-manager": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-dialog": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-fs": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-global-shortcut": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-http": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-notification": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-os": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-process": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-shell": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-store": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-updater": "^2.0.0-rc.2",
+    "@tauri-apps/plugin-window-state": "^2.0.0-rc.0"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.1",
+    "@sveltejs/kit": "^2.0.0",
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@tailwindcss/typography": "^0.5.13",
+    "@tauri-apps/cli": "^2.0.0-rc.1",
+    "autoprefixer": "^10.4.19",
+    "daisyui": "^4.12.10",
+    "postcss": "^8.4.39",
+    "svelte": "^4.2.7",
+    "svelte-check": "^3.6.0",
+    "tailwindcss": "^3.4.4",
+    "tslib": "^2.4.1",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.3"
+  }
+}

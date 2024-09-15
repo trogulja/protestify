@@ -1,0 +1,47 @@
+{
+  "productName": "protestify",
+  "version": "0.0.1",
+  "identifier": "com.trogulja.protestify",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "protestify",
+        "width": 800,
+        "height": 600
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' https: data: asset: http://asset.localhost; script-src 'self'; style-src 'self' 'unsafe-inline';",
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["**"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "createUpdaterArtifacts": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4RDM5QUNBMEZGOTlFRTEKUldUaG52a1B5cHJUZUZLbGtac1lBc2x5U2VKR3lndEJ4YUxRUDdENllHakVsOWRkZXNGOFozcFUK",
+      "endpoints": [
+        "https://github.com/trogulja/protestify/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}

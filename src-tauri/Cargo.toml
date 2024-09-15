@@ -1,0 +1,45 @@
+[package]
+name = "protestify"
+version = "0.0.1"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "protestify_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+
+[build-dependencies]
+tauri-build = { version = "2.0.0-rc", features = [] }
+
+[dependencies]
+dirs = "5.0"
+lazy_static = "1.5"
+phf = { version = "0.11", features = ["macros"] }
+regex = "1.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9.34"
+tauri = { version = "2.0.0-rc", features = ["protocol-asset"] }
+tauri-plugin-clipboard-manager = "2.1.0-beta.7"
+tauri-plugin-dialog = "2.0.0-rc.0"
+tauri-plugin-fs = "2.0.0-rc.0"
+tauri-plugin-http = "2.0.0-rc.0"
+tauri-plugin-notification = "2.0.0-rc.0"
+tauri-plugin-os = "2.0.0-rc.0"
+tauri-plugin-process = "2.0.0-rc.0"
+tauri-plugin-shell = "2.0.0-rc.0"
+tauri-plugin-window-state = "2.0.0-rc"
+tauri-plugin-store = "2.0.0-rc"
+uuid = { version = "1", features = ["v4"] }
+walkdir = "2.5"
+
+[dev-dependencies]
+tempfile = "3.11"
+
+[target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
+tauri-plugin-global-shortcut = "2.0.0-rc.0"
+tauri-plugin-updater = "2.0.0-rc.3"
