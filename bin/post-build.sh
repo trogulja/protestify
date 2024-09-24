@@ -37,13 +37,23 @@ SIGNATURE=$(cat "$SIGNATURE_FILE")
 URL="https://github.com/trogulja/protestify/releases/download/v$VERSION/protestify.app.tar.gz"
 NOTES="Release notes for version $VERSION"
 
-# Update the latest.json file
-jq ".version = \"$VERSION\" | .notes = \"$NOTES\" | .pub_date = \"$CURRENT_DATE\" | .platforms.\"darwin-aarch64\".signature = \"$SIGNATURE\" | .platforms.\"darwin-aarch64\".url = \"$URL\"" \
-   "$LATEST_JSON_PATH" > "$LATEST_JSON_PATH.tmp" && mv "$LATEST_JSON_PATH.tmp" "$LATEST_JSON_PATH"
+jq -n --arg version "$VERSION" --arg notes "$NOTES" --arg pub_date "$CURRENT_DATE" --arg signature "$SIGNATURE" --arg url "$URL" \
+'{
+  version: $version,
+  notes: $notes,
+  pub_date: $pub_date,
+  platforms: {
+    "darwin-aarch64": {
+      signature: $signature,
+      url: $url
+    }
+  }
+}' > "$LATEST_JSON_PATH"
 
 echo "latest.json has been updated successfully."
 
 # Create a new release using the gh CLI
-gh release create "v$VERSION" "$INSTALLER_FILE" "$UPDATER_FILE" --generate-notes --title "Release v$VERSION"
+gh release create "v$VERSION" "$INSTALLER_FILE" "$UPDATER_FILE" "$LATEST_JSON_PATH" --generate-notes --title "Release v$VERSION"
+rm "$LATEST_JSON_PATH"
 
 echo "Release v$VERSION has been created and files have been uploaded successfully."
