@@ -37,6 +37,7 @@ echo "Version updated to $NEW_VERSION in package.json, Cargo.toml, and tauri.con
 
 # Ask the user if they want to stage and commit the changes
 read -n 1 -r -p "Do you want to stage and commit these changes? (y/n): " COMMIT_CHANGES
+echo
 
 if [[ "$COMMIT_CHANGES" == "y" || "$COMMIT_CHANGES" == "Y" ]]; then
   git add .
