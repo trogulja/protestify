@@ -1,10 +1,10 @@
 {
   "version": "0.0.1",
   "notes": "This would be the initial version\nIt will be updated with each new release",
-  "pub_date": "2024-09-15T18:32:37Z",
+  "pub_date": "2024-09-23T10:32:37Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUaG52a1B5cHJUZUxTa3dhNlI5ckpqZ0xPTEh5QllQNmJFVlRBZ1hGL0N2N2I3M3l5RmQ4MHQzb3BtT2FNQlJaSkRyek5sYmdDUlJDRGdLM1JiTmlnaVdselc4YUM3cGdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzI2NDE1MDY0CWZpbGU6cHJvdGVzdGlmeS5hcHAudGFyLmd6CjlzUWJUWVFzeVh2OEwrTE9xQ0QyQjIyTTVwSTJMdU1nOFZHV1BTbmV2VU10WFJFczZwaDJjaUpkVkhmQ1d5VUkyVWttWGViazkzVWFwVGhQalFKQUNRPT0K",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUaG52a1B5cHJUZUxNOWJqVXR1VTM5b2FMOVhHSUorZU5GWW5hQURFVEg1ZGY2aUlzMDFpNnlLRldaM3J1aFltY0JRYnMwRUUwNlJITkt0b29mM0NXUFc4YTQxUnFmUmdvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzI3MTY0MTg2CWZpbGU6cHJvdGVzdGlmeS5hcHAudGFyLmd6CktNL3JNenFwT3kyM2tVRjdjR3FiRloxckZOMjhqQmRqSFFOVEIrOXlyRnpMcHpMTndwNlhoR2hMV2xxQ2VINE54OWxXbVVJb1haQWRmYjhOek9TYkJRPT0K",
       "url": "https://github.com/trogulja/protestify/releases/download/v0.0.1/protestify.app.tar.gz"
     }
   }
