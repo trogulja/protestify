@@ -1,11 +1,11 @@
 {
-  "version": "0.0.1",
-  "notes": "This would be the initial version\nIt will be updated with each new release",
-  "pub_date": "2024-09-23T10:32:37Z",
+  "version": "0.0.2",
+  "notes": "Release notes for version 0.0.2",
+  "pub_date": "2024-09-24T08:51:33Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUaG52a1B5cHJUZUxNOWJqVXR1VTM5b2FMOVhHSUorZU5GWW5hQURFVEg1ZGY2aUlzMDFpNnlLRldaM3J1aFltY0JRYnMwRUUwNlJITkt0b29mM0NXUFc4YTQxUnFmUmdvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzI3MTY0MTg2CWZpbGU6cHJvdGVzdGlmeS5hcHAudGFyLmd6CktNL3JNenFwT3kyM2tVRjdjR3FiRloxckZOMjhqQmRqSFFOVEIrOXlyRnpMcHpMTndwNlhoR2hMV2xxQ2VINE54OWxXbVVJb1haQWRmYjhOek9TYkJRPT0K",
-      "url": "https://github.com/trogulja/protestify/releases/download/v0.0.1/protestify.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUaG52a1B5cHJUZUNoTm90RC9lOE9QUk00QUYzYkpncUlRS0x5N0ZObmJ6dS9ZZTU3aEkvZzF4QWp0eDdaWGZsSGhtOFBQYWk3RTlyWndRREMzNklUR0lZenJlSUxYK1FVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzI3MTY3ODkzCWZpbGU6cHJvdGVzdGlmeS5hcHAudGFyLmd6CjljZXRRM3BWNGZqZjk3dXZXc3NKbk5tYkJFRjNoaXBVZUZUbXB2S0x5eXFCamFSQ2NTeE9TZ0s2bk1ZSG5TWnE5aTNnZDd5S29XSXh3VzVBQjRUZUNBPT0K",
+      "url": "https://github.com/trogulja/protestify/releases/download/v0.0.2/protestify.app.tar.gz"
     }
   }
 }
