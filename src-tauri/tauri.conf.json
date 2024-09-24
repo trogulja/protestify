@@ -20,7 +20,9 @@
       "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' https: data: asset: http://asset.localhost; script-src 'self'; style-src 'self' 'unsafe-inline';",
       "assetProtocol": {
         "enable": true,
-        "scope": ["**"]
+        "scope": [
+          "**"
+        ]
       }
     }
   },
@@ -40,7 +42,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4RDM5QUNBMEZGOTlFRTEKUldUaG52a1B5cHJUZUZLbGtac1lBc2x5U2VKR3lndEJ4YUxRUDdENllHakVsOWRkZXNGOFozcFUK",
       "endpoints": [
-        "https://raw.githubusercontent.com/trogulja/protestify/refs/heads/main/latest.json"
+        "https://github.com/trogulja/protestify/releases/latest/download/latest.json"
       ]
     }
   }
