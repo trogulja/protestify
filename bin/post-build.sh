@@ -43,7 +43,6 @@ jq ".version = \"$VERSION\" | .notes = \"$NOTES\" | .pub_date = \"$CURRENT_DATE\
 
 echo "latest.json has been updated successfully."
 
-# TODO: first make release, then update latest.json
 # Create a new release using the gh CLI
 gh release create "v$VERSION" "$INSTALLER_FILE" "$UPDATER_FILE" --generate-notes --title "Release v$VERSION"
 
