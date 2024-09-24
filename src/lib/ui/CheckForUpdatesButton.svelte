@@ -19,27 +19,30 @@
       }
     }
 
-    if (!update) {
-			await message(`Failed to check for updates:\n\n${errorMessage}`, {
-				title: 'Error',
-				kind: 'error',
-				okLabel: 'OK'
-			});
-			return;
-    } else if (update.available) {
-      const yes = await ask(`Update to ${update.version} is available. Do you want to update now?\n\nRelease notes: ${update.body}`, {
-        title: 'Update available',
-        kind: 'info',
-        okLabel: 'Yes',
-        cancelLabel: 'No'
+    if (errorMessage) {
+      await message(`Failed to check for updates:\n\n${errorMessage}`, {
+        title: 'Error',
+        kind: 'error',
+        okLabel: 'OK',
       });
+      return;
+    } else if (update?.available) {
+      const yes = await ask(
+        `Update to ${update.version} is available. Do you want to update now?\n\nRelease notes: ${update.body}`,
+        {
+          title: 'Update available',
+          kind: 'info',
+          okLabel: 'Yes',
+          cancelLabel: 'No',
+        }
+      );
 
       if (yes) {
         await update.downloadAndInstall();
         await message('Update installed successfully. Relaunching the app...', {
           title: 'Success',
           kind: 'info',
-          okLabel: 'OK'
+          okLabel: 'OK',
         });
         await relaunch();
       }
@@ -47,7 +50,7 @@
       await message('No updates available.', {
         title: 'Info',
         kind: 'info',
-        okLabel: 'OK'
+        okLabel: 'OK',
       });
     }
   }
