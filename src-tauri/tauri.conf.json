@@ -1,6 +1,6 @@
 {
   "productName": "protestify",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "identifier": "com.trogulja.protestify",
   "build": {
     "beforeDevCommand": "npm run dev",
