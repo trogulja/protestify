@@ -1,7 +1,7 @@
-import { Store } from "@tauri-apps/plugin-store";
+import { LazyStore } from "@tauri-apps/plugin-store";
 import { writable } from "svelte/store";
 
-const store = new Store('.settings.dat');
+const store = new LazyStore('.settings.dat');
 
 function settingsStore() {
   const initialValue = {
