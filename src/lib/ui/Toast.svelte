@@ -7,12 +7,17 @@
 
   const dispatch = createEventDispatcher();
 
-  // TODO: add icons for different types
-  export let type = 'error';
-  export let dismissible = true;
-  export let message = 'Something went wrong.';
+  
+  interface Props {
+    // TODO: add icons for different types
+    type?: string;
+    dismissible?: boolean;
+    message?: string;
+  }
 
-  $: className = `alert-${type}`;
+  let { type = 'error', dismissible = true, message = 'Something went wrong.' }: Props = $props();
+
+  let className = $derived(`alert-${type}`);
 </script>
 
 <!-- TODO: fix this, tree shaking will not include these classes if they are dynamically constructed -->
@@ -28,7 +33,7 @@
   {/if} -->
   <span>{message}</span>
   {#if dismissible}
-    <button class="close" on:click={() => dispatch("dismiss")}>
+    <button class="close" onclick={() => dispatch("dismiss")}>
       X
       <!-- <CloseIcon width="0.8em" /> -->
     </button>

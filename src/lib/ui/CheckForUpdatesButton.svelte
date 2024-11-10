@@ -56,6 +56,6 @@
   }
 </script>
 
-<button on:click={checkForAppUpdates} class="btn btn-primary btn-sm">
+<button onclick={checkForAppUpdates} class="btn btn-primary btn-sm">
   update
 </button>

@@ -1,9 +1,11 @@
-<script>
+<script lang="ts">
   import "../app.css";
   import isUpdateAvailable from '$lib/store/is-update-available';
 
   import Toasts from '$lib/ui/Toasts.svelte';
   import CheckForUpdatesButton from '$lib/ui/CheckForUpdatesButton.svelte';
+
+  let { children } = $props();
 </script>
 
 <div class="navbar bg-base-300">
@@ -40,5 +42,5 @@
 
 <div class="container mx-auto py-4">
   <Toasts />
-  <slot />
+  {@render children()}
 </div>

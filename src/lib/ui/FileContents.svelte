@@ -9,9 +9,13 @@
 
   const NO_FILE_CONTENTS = [['0', 'No file contents']];
 
-  let fileContents: string[][] = NO_FILE_CONTENTS;
-  export let filePath: string;
-  export let scenarioName: string | undefined = undefined;
+  let fileContents: string[][] = $state(NO_FILE_CONTENTS);
+  interface Props {
+    filePath: string;
+    scenarioName?: string | undefined;
+  }
+
+  let { filePath, scenarioName = undefined }: Props = $props();
 
   // I am on a "Template center" screen and flag "budgetTemplates,templatesTypesAndCreators" is enabled
   const patterns = [
@@ -50,25 +54,25 @@
     const lines = result?.ok.trimEnd().split('\n');
     if (!lines?.length) return NO_FILE_CONTENTS;
 
-    return lines.map((line) => {
+    const contents = lines.map((line) => {
       // Escape HTML entities
       line = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const match = line.match(/^(\d+):(.*)$/);
       return match ? [match[1], colorCodeLine(match[2])] : ['0', line];
     });
+
+    fileContents = contents;
   }
 
-  $: (async () => {
-    fileContents = await loadFile(filePath, scenarioName);
-  })();
+  $effect(() => {
+    loadFile(filePath, scenarioName);
+  })
 </script>
 
 <div class="relative">
   <button
     class="absolute z-50 top-0 right-0 btn btn-square rounded-tl-none rounded-br-none"
-    on:click={async () => {
-      fileContents = await loadFile(filePath, scenarioName);
-    }}
+    onclick={() => loadFile(filePath, scenarioName)}
   >
     <Icon
       name="reload"

@@ -7,20 +7,17 @@
   import Icon from '$lib/ui/Icon.svelte';
   import Label from '$lib/ui/form/Label.svelte';
 
-  export let data: {
-    basePath: string;
-    e2ePwd: string;
-    e2eUrl: string;
-    codeEditor: string;
-  };
+  let { data } = $props();
 
-  let basePath = data.basePath;
-  let e2ePwd = data.e2ePwd;
-  let e2eUrl = data.e2eUrl;
-  let codeEditor = data.codeEditor;
+  let basePath = $state(data.basePath);
+  let e2ePwd = $state(data.e2ePwd);
+  let e2eUrl = $state(data.e2eUrl);
+  let codeEditor = $state(data.codeEditor);
 
 
-  async function autoDetect() {
+  async function autoDetect(event: Event) {
+    event.preventDefault();
+
     const autodetect = await invoke<InvokeFindE2eRepo | InvokeErr>('find_e2e_repo');
     if (isInvokeErr(autodetect)) {
       addToast({
@@ -40,7 +37,9 @@
     e2eUrl = autodetect.ok.app_url;
   }
 
-  async function saveData() {
+  async function saveData(event: Event) {
+    event.preventDefault();
+
     try {
       e2eUrl = e2eUrl ? new URL(e2eUrl).origin : e2eUrl;
     } catch (error) {
@@ -58,11 +57,11 @@
     });
   }
 
-  $: isDirty =
-    basePath !== $settings.basePath ||
+  let isDirty =
+    $derived(basePath !== $settings.basePath ||
     e2ePwd !== $settings.e2ePwd ||
     e2eUrl !== $settings.e2eUrl ||
-    codeEditor !== $settings.codeEditor;
+    codeEditor !== $settings.codeEditor);
 </script>
 
 <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
@@ -76,15 +75,17 @@
     <div
       class="mt-5 p-4 relative z-10 bg-white border rounded-xl sm:mt-10 md:p-10 dark:bg-neutral-900 dark:border-neutral-700"
     >
-      <form on:submit|preventDefault={saveData}>
+      <form onsubmit={saveData}>
         <div class="mb-4 sm:mb-8">
           <Label forId="e2e-repo-location-input">
             E2e repo location
-            <div slot="info">
-              <h2 class="card-title">Auto-detectable!</h2>
-              <p>Full path to the e2e repo location in your file system.</p>
-              <p>This app can't work without knowing where to find the feature files.</p>
-            </div>
+            {#snippet info()}
+              <div >
+                <h2 class="card-title">Auto-detectable!</h2>
+                <p>Full path to the e2e repo location in your file system.</p>
+                <p>This app can't work without knowing where to find the feature files.</p>
+              </div>
+            {/snippet}
           </Label>
 
           <input
@@ -98,10 +99,12 @@
         <div class="mb-4 sm:mb-8">
           <Label forId="e2e-repo-password-input">
             E2e password
-            <div slot="info">
-              <h2 class="card-title">Auto-detectable!</h2>
-              <p>A common password for the e2e users, will be used for opening the target web page.</p>
-            </div>
+            {#snippet info()}
+              <div >
+                <h2 class="card-title">Auto-detectable!</h2>
+                <p>A common password for the e2e users, will be used for opening the target web page.</p>
+              </div>
+            {/snippet}
           </Label>
 
           <input
@@ -115,10 +118,12 @@
         <div class="mb-4 sm:mb-8">
           <Label forId="e2e-repo-url-input">
             E2e url
-            <div slot="info">
-              <h2 class="card-title">Auto-detectable!</h2>
-              <p>App url (e2e env), will be used for opening the target web page.</p>
-            </div>
+            {#snippet info()}
+              <div >
+                <h2 class="card-title">Auto-detectable!</h2>
+                <p>App url (e2e env), will be used for opening the target web page.</p>
+              </div>
+            {/snippet}
           </Label>
 
           <input
@@ -132,10 +137,12 @@
         <div class="mb-4 sm:mb-8">
           <Label forId="code-editor-input">
             Code editor
-            <div slot="info">
-              <h2 class="card-title">Not auto-detectable</h2>
-              <p>Code editor used to open the feature file... It should be "code", but you might prefer something else.</p>
-            </div>
+            {#snippet info()}
+              <div >
+                <h2 class="card-title">Not auto-detectable</h2>
+                <p>Code editor used to open the feature file... It should be "code", but you might prefer something else.</p>
+              </div>
+            {/snippet}
           </Label>
 
           <input
@@ -155,7 +162,7 @@
             >
             <button
               class="btn btn-primary btn-square"
-              on:click|preventDefault={autoDetect}
+              onclick={autoDetect}
             >
               <Icon name="wizard" class="h-6 w-6" />
             </button>

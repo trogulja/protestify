@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type Scenario from '$lib/model/scenario';
   import type {CommandCollection} from '$lib/ui/CommandPreview.svelte';
 
   import Breadcrumbs from '$lib/ui/Breadcrumbs.svelte';
@@ -9,17 +8,28 @@
   import OrganizationTargets from '$lib/ui/OrganizationTargets.svelte';
   import TestRunner from '$lib/ui/TestRunner.svelte';
 
-  export let data: {
-    scenario: Scenario;
-    filePath: string;
-    scenarioName: string;
-  };
+  let { data } = $props();
 
   const scenario = data.scenario;
   const filePath = data.filePath;
   const scenarioName = data.scenarioName;
 
-  let command: CommandCollection = {isEmptyCommand: true};
+  // TODO: handle this via some class or something - this is a hack
+  let targetCmd: CommandCollection = $state({isEmptyCommand: true});
+  let testRunnerCmd: CommandCollection = $state({isEmptyCommand: true});
+  let previewCmd: CommandCollection = $state({isEmptyCommand: true});
+
+  const setPreviewCmd = (cmd: CommandCollection) => {
+    previewCmd = cmd;
+  }
+
+  $effect(() => {
+    setPreviewCmd(targetCmd);
+  })
+
+  $effect(() => {
+    setPreviewCmd(testRunnerCmd);
+  })
 
   // @ts-expect-error - for debugging
   window.k = scenario;
@@ -36,7 +46,7 @@
   <div class="flex-1 card bg-neutral w-96 shadow-xl">
     <div class="card-body">
       <OrganizationTargets
-        bind:command={command}
+        bind:command={targetCmd}
         targets={scenario.targets}
         users={scenario.organizationUsers}
         slug={scenario.organizationSlug}
@@ -45,7 +55,7 @@
       <div class="divider"></div>
 
       <TestRunner
-        bind:command={command}
+        bind:command={testRunnerCmd}
         scenarioName={scenarioName}
         featureFile={filePath}
       />
@@ -53,7 +63,7 @@
       <div class="divider"></div>
 
       <CommandPreview
-        command={command}
+        command={previewCmd}
         maxLineLength={scenario.commandMaxLen}
       />
     </div>

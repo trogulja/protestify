@@ -1,5 +1,10 @@
 <script lang="ts">
-  export let name: keyof typeof icons;
+  interface Props {
+    name: keyof typeof icons;
+    [key: string]: any
+  }
+
+  let { name, ...props }: Props = $props();
 
   const icons = {
     date: {
@@ -48,16 +53,16 @@
     }
   };
 
-  $: icon = {
+  let icon = $derived({
     box: 24,
     stroke: undefined,
     fill: undefined,
     ...icons[name],
-  };
+  });
 </script>
 
 <svg
-  class={$$props.class}
+  class={props.class}
   xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 {icon.box} {icon.box}"
   stroke={icon.stroke}
