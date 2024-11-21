@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type OpenCommand = {
     url: string;
     screen: string;
@@ -23,9 +23,13 @@
   const isTestCommand = (obj: CommandCollection): obj is TestCommand => 'featureFile' in obj;
   const isEmptyCommand = (obj: CommandCollection): obj is EmptyCommand => 'isEmptyCommand' in obj;
 
-  export let command: CommandCollection;
-  export let maxLines = 5;
-  export let maxLineLength = 10;
+  interface Props {
+    command: CommandCollection;
+    maxLines?: number;
+    maxLineLength?: number;
+  }
+
+  let { command, maxLines = 5, maxLineLength = 10 }: Props = $props();
 
   function getLines(cmd: CommandCollection): string[] {
     const lines: string[] = [];
@@ -59,7 +63,7 @@
     return lines;
   };
 
-  $: lines = getLines(command);
+  let lines = $derived(getLines(command));
 </script>
 
 <div>Command preview:</div>

@@ -1,8 +1,8 @@
 <script lang="ts">
   import Breadcrumbs from '$lib/ui/Breadcrumbs.svelte';
-  import type Owner from '$lib/model/owner';
 
-  export let data: { owner: Owner };
+  let {data} = $props();
+
   const owner = data.owner;
   const team = owner.firstTeam;
 </script>

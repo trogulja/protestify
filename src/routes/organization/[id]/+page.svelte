@@ -1,8 +1,7 @@
 <script lang="ts">
   import Breadcrumbs from '$lib/ui/Breadcrumbs.svelte';
-  import type Organization from '$lib/model/organization';
 
-  export let data: { organization: Organization };
+  let { data } = $props();
 
   const organization = data.organization;
 </script>

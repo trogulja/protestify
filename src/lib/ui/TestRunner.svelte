@@ -4,9 +4,13 @@
 
   import type {CommandCollection} from '$lib/ui/CommandPreview.svelte';
 
-  export let command: CommandCollection = {isEmptyCommand: true};
-  export let scenarioName: string | undefined = undefined;
-  export let featureFile: string;
+  interface Props {
+    command?: CommandCollection;
+    scenarioName?: string | undefined;
+    featureFile: string;
+  }
+
+  let { command = $bindable(), scenarioName = undefined, featureFile }: Props = $props();
   let folderPath = $settings.basePath;
 
   async function runScenario() {
@@ -40,18 +44,18 @@
   {#if scenarioName}
     <button
       class="btn btn-info"
-      on:mouseenter={showScenarioCodeHint}
-      on:mouseleave={hideCodeHint}
-      on:click={runScenario}
+      onmouseenter={showScenarioCodeHint}
+      onmouseleave={hideCodeHint}
+      onclick={runScenario}
     >
       Run scenario
     </button>
   {/if}
   <button
     class="btn btn-primary"
-    on:mouseenter={showFeatureCodeHint}
-    on:mouseleave={hideCodeHint}
-    on:click={runFeature}
+    onmouseenter={showFeatureCodeHint}
+    onmouseleave={hideCodeHint}
+    onclick={runFeature}
   >
     Run feature
   </button>

@@ -2,9 +2,13 @@
   import Icon from '$lib/ui/Icon.svelte';
   import type { BCType } from '$lib/ui/Breadcrumbs.svelte';
 
-  export let link: string | null = null;
-  export let name: string;
-  export let type: BCType;
+  interface Props {
+    link?: string | null;
+    name: string;
+    type: BCType;
+  }
+
+  let { link = null, name, type }: Props = $props();
 </script>
 
 {#if link}

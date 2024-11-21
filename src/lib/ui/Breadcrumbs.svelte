@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type BCType =
     | 'table'
     | 'feature'
@@ -11,11 +11,20 @@
 <script lang="ts">
   import BreadcrumbsItem from '$lib/ui/BreadcrumbsItem.svelte';
 
-  export let parent: string = '';
-  export let parentUrl: string | null = null;
 
-  export let name: string;
-  export let type: BCType;
+  interface Props {
+    parent?: string;
+    parentUrl?: string | null;
+    name: string;
+    type: BCType;
+  }
+
+  let {
+    parent = '',
+    parentUrl = null,
+    name,
+    type
+  }: Props = $props();
 
   const typeToParentTypeMap = {
     scenario: 'feature',

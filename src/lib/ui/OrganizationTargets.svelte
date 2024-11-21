@@ -5,16 +5,27 @@
 
   import type {CommandCollection, OpenCommand} from '$lib/ui/CommandPreview.svelte';
 
-  export let command: CommandCollection = {isEmptyCommand: true};
-  export let targets: string[] = [];
-  export let users: Record<string, string> = {};
-  export let slug: string = '';
-  let e2ePwd = $settings.e2ePwd;
-  let e2eUrl = $settings.e2eUrl;
+  interface Props {
+    command?: CommandCollection;
+    targets?: string[];
+    users?: Record<string, string>;
+    slug?: string;
+  }
 
-  let isUserSelectOpen = false;
-  let possibleUsers: string[] = [];
-  let selectedUser = '';
+  let {
+    command = $bindable(),
+    targets = [],
+    users = {},
+    slug = ''
+  }: Props = $props();
+
+  const {e2ePwd, e2eUrl} = $settings;
+
+  const possibleUsers = Object.keys(users);
+  const firstUser = possibleUsers?.[0] ?? '';
+  let selectedUser = $state(firstUser);
+
+  let isUserSelectOpen = $state(false);
 
   type UserTargets = {
     name: string;
@@ -23,24 +34,24 @@
     command: OpenCommand;
   }[];
 
-  let userTargets: UserTargets = [];
+  let userTargets: UserTargets = $state([]);
 
-  function createUrl(baseUrl: string, email: string, password: string, target?: {flag?: string, date?: string}) {
+  function createUrl(baseUrl: string, email: string, target?: {flag?: string, date?: string}) {
     const url = new URL(baseUrl);
-    url.searchParams.append('dat', `${email}:${password}`);
+    url.searchParams.append('dat', `${email}:${e2ePwd}`);
     if (target?.flag) url.searchParams.append('flag', target.flag);
     if (target?.date) url.searchParams.append('mockDate', target.date);
     return url.href;
   }
 
-  function getUserTargets(targets: string[], slug: string, user: string, email: string, password: string, e2eUrl: string) {
+  function getUserTargets(user: string, email: string) {
     const ut: UserTargets = targets.map((target) => {
       const [name, url, flag, date] = target.split(';');
       const baseUrl = `${e2eUrl}/${slug}${url}`;
       return {
         name: toSentenceCase(name),
         class: 'btn-info',
-        url: createUrl(baseUrl, email, password, {flag, date}),
+        url: createUrl(baseUrl, email, {flag, date}),
         command: {
           url: slug,
           screen: toSentenceCase(name),
@@ -54,7 +65,7 @@
     ut.push({
       name: 'Launchpad',
       class: 'btn-primary',
-      url: createUrl(`${e2eUrl}/launchpad`, email, password),
+      url: createUrl(`${e2eUrl}/launchpad`, email),
       command: {
         url: slug,
         screen: 'Launchpad',
@@ -62,17 +73,15 @@
       },
     })
 
-    return ut;
+    userTargets = ut;
   }
 
-  $: if (Object.keys(users).length > 0) {
-    possibleUsers = Object.keys(users);
-    selectedUser = possibleUsers[0];
-  }
 
-  $: if (targets.length > 0) {
-    userTargets = getUserTargets(targets, slug, selectedUser, users[selectedUser], e2ePwd, e2eUrl);
-  }
+  $effect(() => {
+    if (targets.length > 0) {
+      getUserTargets(selectedUser, users[selectedUser]);
+    }
+  })
 
   function selectUser(name: string) {
     selectedUser = name;
@@ -98,7 +107,7 @@
     <summary class="btn btn-outline btn-sm m-1">{selectedUser}</summary>
     <ul class="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
       {#each possibleUsers as user}
-        <li><button on:click={() => selectUser(user)}>{user}</button></li>
+        <li><button onclick={() => selectUser(user)}>{user}</button></li>
       {/each}
     </ul>
   </details>
@@ -108,9 +117,9 @@
   {#each userTargets as target}
     <button
       class="btn {target.class}"
-      on:mouseenter={() => showCodeHint(target.command)}
-      on:mouseleave={hideCodeHint}
-      on:click={() => openLink(target.url)}
+      onmouseenter={() => showCodeHint(target.command)}
+      onmouseleave={hideCodeHint}
+      onclick={() => openLink(target.url)}
     >
       {target.name}
     </button>

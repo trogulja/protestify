@@ -1,6 +1,4 @@
 <script lang="ts">
-  import type Feature from '$lib/model/feature';
-  import type Scenario from '$lib/model/scenario';
   import type {CommandCollection} from '$lib/ui/CommandPreview.svelte';
 
   import Breadcrumbs from '$lib/ui/Breadcrumbs.svelte';
@@ -10,17 +8,13 @@
   import OrganizationTargets from '$lib/ui/OrganizationTargets.svelte';
   import TestRunner from '$lib/ui/TestRunner.svelte';
 
-  export let data: {
-    feature: Feature;
-    filePath: string;
-    scenarios: Scenario[];
-  }
+  let { data } = $props();
 
   const feature = data.feature;
   const filePath = data.filePath;
   const scenarios = data.scenarios;
 
-  let command: CommandCollection = {isEmptyCommand: true};
+  let command: CommandCollection = $state({isEmptyCommand: true});
 
   // @ts-expect-error - for debugging
   window.k = feature;
