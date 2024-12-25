@@ -14,7 +14,7 @@
   const filePath = data.filePath;
   const scenarioName = data.scenarioName;
 
-  // TODO: handle this via some class or something - this is a hack
+  // TODO: handle this via some class and state
   let targetCmd: CommandCollection = $state({isEmptyCommand: true});
   let testRunnerCmd: CommandCollection = $state({isEmptyCommand: true});
   let previewCmd: CommandCollection = $state({isEmptyCommand: true});
