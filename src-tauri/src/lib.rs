@@ -1,8 +1,10 @@
+mod clone_detector;
 mod cucumber_runner;
 mod e2e_locator;
 mod features_reader;
 mod file_reader;
 mod organizations_reader;
+mod steps_reader;
 
 use serde_json::json;
 
@@ -61,6 +63,20 @@ fn run_e2e(
     }
 }
 
+#[tauri::command]
+fn detect_organization_clones(organizations: Vec<(String, String)>) -> serde_json::Value {
+    let clone_groups = clone_detector::detect_clones(&organizations);
+    json!({ "ok": clone_groups })
+}
+
+#[tauri::command]
+fn get_steps(base_path: String) -> serde_json::Value {
+    match steps_reader::parse_step_definitions(&base_path) {
+        Ok(steps) => json!({ "ok": steps }),
+        Err(e) => json!({ "err": e }),
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -76,10 +92,12 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_store::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
+            detect_organization_clones,
             find_e2e_repo,
             get_features,
             get_file_contents,
             get_organizations,
+            get_steps,
             run_e2e,
             validate_e2e_repo
         ])

@@ -3209,7 +3209,7 @@ dependencies = [
 
 [[package]]
 name = "protestify"
-version = "0.0.6"
+version = "1.0.0"
 dependencies = [
  "dirs",
  "lazy_static",
