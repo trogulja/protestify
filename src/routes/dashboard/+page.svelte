@@ -82,9 +82,9 @@
   {/if}
 
   <div class="grid md:grid-cols-2 gap-6">
-    <div>
+    <div class="flex flex-col">
       <h2 class="section-title">By Team</h2>
-      <div class="card-clean overflow-hidden">
+      <div class="card-clean overflow-hidden flex-1">
         <div class="overflow-x-auto max-h-80">
           <table class="table table-sm">
             <thead class="sticky top-0">
@@ -110,9 +110,9 @@
       </div>
     </div>
 
-    <div>
+    <div class="flex flex-col">
       <h2 class="section-title">By Owner</h2>
-      <div class="card-clean overflow-hidden">
+      <div class="card-clean overflow-hidden flex-1">
         <div class="overflow-x-auto max-h-80">
           <table class="table table-sm">
             <thead class="sticky top-0">
