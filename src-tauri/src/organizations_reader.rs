@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_yaml::from_reader;
+use serde_yml::from_reader;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::Path;
