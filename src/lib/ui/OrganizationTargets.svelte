@@ -21,9 +21,16 @@
 
   const {e2ePwd, e2eUrl} = $settings;
 
-  const possibleUsers = Object.keys(users);
-  const firstUser = possibleUsers?.[0] ?? '';
-  let selectedUser = $state(firstUser);
+  let possibleUsers = $derived(Object.keys(users));
+  let firstUser = $derived(possibleUsers?.[0] ?? '');
+  let selectedUser = $state('');
+
+  // Initialize selectedUser when users change
+  $effect(() => {
+    if (firstUser && !selectedUser) {
+      selectedUser = firstUser;
+    }
+  });
 
   let isUserSelectOpen = $state(false);
 

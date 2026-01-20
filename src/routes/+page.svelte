@@ -1,20 +1,21 @@
 <script lang="ts">
+  import { invalidateAll } from '$app/navigation';
   import store from '$lib/store';
   import searchTerm from '$lib/store/search-term';
   import Icon from '$lib/ui/Icon.svelte';
 
   let { data } = $props();
-  let tableData = $state(data.tableData);
+  let tableData = $derived(data.tableData);
 
-  let filteredTableData = $derived(tableData.filter((data) => {
+  let filteredTableData = $derived(tableData.filter((row) => {
     return (
-      data.scenario.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      data.feature.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      data.organization.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      data.organizationId.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      data.tags.some((tag) => tag.toLowerCase().includes($searchTerm.toLowerCase())) ||
-      data.owner.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      data.team.toLowerCase().includes($searchTerm.toLowerCase())
+      row.scenario.toLowerCase().includes($searchTerm.toLowerCase()) ||
+      row.feature.toLowerCase().includes($searchTerm.toLowerCase()) ||
+      row.organization.toLowerCase().includes($searchTerm.toLowerCase()) ||
+      row.organizationId.toLowerCase().includes($searchTerm.toLowerCase()) ||
+      row.tags.some((tag) => tag.toLowerCase().includes($searchTerm.toLowerCase())) ||
+      row.owner.toLowerCase().includes($searchTerm.toLowerCase()) ||
+      row.team.toLowerCase().includes($searchTerm.toLowerCase())
     );
   }));
 
@@ -26,7 +27,7 @@
 
   async function handleReloadData() {
     await store.reloadData();
-    tableData = store.tableData.scenarios;
+    await invalidateAll();
   }
 
   // @ts-expect-error - for debugging

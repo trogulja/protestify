@@ -2,7 +2,7 @@
   import Breadcrumbs from '$lib/ui/Breadcrumbs.svelte';
 
   let { data } = $props();
-  const team = data.team;
+  let team = $derived(data.team);
 </script>
 
 <Breadcrumbs

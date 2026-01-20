@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { invoke } from "@tauri-apps/api/core";
   import { isInvokeErr } from '$lib/utils';
   import { addToast, ToastType } from '$lib/store/toasts';
@@ -9,10 +10,11 @@
 
   let { data } = $props();
 
-  let basePath = $state(data.basePath);
-  let e2ePwd = $state(data.e2ePwd);
-  let e2eUrl = $state(data.e2eUrl);
-  let codeEditor = $state(data.codeEditor);
+  // Form fields intentionally capture initial values (user edits them locally)
+  let basePath = $state(untrack(() => data.basePath));
+  let e2ePwd = $state(untrack(() => data.e2ePwd));
+  let e2eUrl = $state(untrack(() => data.e2eUrl));
+  let codeEditor = $state(untrack(() => data.codeEditor));
 
 
   async function autoDetect(event: Event) {

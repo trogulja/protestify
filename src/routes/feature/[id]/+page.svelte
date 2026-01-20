@@ -10,14 +10,14 @@
 
   let { data } = $props();
 
-  const feature = data.feature;
-  const filePath = data.filePath;
-  const scenarios = data.scenarios;
+  let feature = $derived(data.feature);
+  let filePath = $derived(data.filePath);
+  let scenarios = $derived(data.scenarios);
 
   let command: CommandCollection = $state({isEmptyCommand: true});
 
   // @ts-expect-error - for debugging
-  window.k = feature;
+  $effect(() => { window.k = feature; });
 </script>
 
 <Breadcrumbs

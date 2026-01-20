@@ -10,9 +10,9 @@
 
   let { data } = $props();
 
-  const scenario = data.scenario;
-  const filePath = data.filePath;
-  const scenarioName = data.scenarioName;
+  let scenario = $derived(data.scenario);
+  let filePath = $derived(data.filePath);
+  let scenarioName = $derived(data.scenarioName);
 
   // TODO: handle this via some class and state
   let targetCmd: CommandCollection = $state({isEmptyCommand: true});
@@ -32,7 +32,7 @@
   })
 
   // @ts-expect-error - for debugging
-  window.k = scenario;
+  $effect(() => { window.k = scenario; });
 </script>
 
 <Breadcrumbs

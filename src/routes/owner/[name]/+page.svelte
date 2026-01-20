@@ -3,8 +3,8 @@
 
   let {data} = $props();
 
-  const owner = data.owner;
-  const team = owner.firstTeam;
+  let owner = $derived(data.owner);
+  let team = $derived(owner.firstTeam);
 </script>
 
 <Breadcrumbs

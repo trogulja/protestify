@@ -3,7 +3,7 @@
 
   let { data } = $props();
 
-  const organization = data.organization;
+  let organization = $derived(data.organization);
 </script>
 
 <Breadcrumbs

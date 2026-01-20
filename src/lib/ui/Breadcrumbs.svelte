@@ -31,9 +31,9 @@
     person: 'team',
   } as const;
 
-  const isTypeWithParent = (type: BCType): type is keyof typeof typeToParentTypeMap => type in typeToParentTypeMap;
-  const getParentType = (type: BCType) => isTypeWithParent(type) ? typeToParentTypeMap[type] : null;
-  const parentType = getParentType(type);
+  const isTypeWithParent = (t: BCType): t is keyof typeof typeToParentTypeMap => t in typeToParentTypeMap;
+  const getParentType = (t: BCType) => isTypeWithParent(t) ? typeToParentTypeMap[t] : null;
+  let parentType = $derived(getParentType(type));
 </script>
 
 <div class="breadcrumbs text-sm mb-4 ml-4">
