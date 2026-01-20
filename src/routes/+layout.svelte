@@ -20,7 +20,7 @@
     // Check for updates
     try {
       const update = await check();
-      if (update?.available) {
+      if (update) {
         pendingUpdate = update;
         isUpdateAvailable.set(true);
       }
@@ -33,17 +33,17 @@
 <div class="flex h-screen flex-col bg-base-200">
   <header class="app-header flex items-center px-4 shrink-0">
     <div class="flex items-center gap-3 flex-1">
-      <a href="/dashboard" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
         <img src="/kraken.svg" alt="protestify" class="w-8 h-8" />
         <span class="font-semibold text-lg">proTestify</span>
       </a>
+      <span class="text-xs text-base-content/40 font-medium">v1.0.0</span>
     </div>
     <div class="flex items-center gap-2">
       {#if $isUpdateAvailable && pendingUpdate}
         <CheckForUpdatesButton update={pendingUpdate} />
       {/if}
       <ThemeToggle />
-      <span class="text-xs text-base-content/40 font-medium ml-1">v1.0.0</span>
     </div>
   </header>
 

@@ -1,123 +1,182 @@
 <script lang="ts">
-  import { invalidateAll } from '$app/navigation';
-  import store from '$lib/store';
-  import searchTerm from '$lib/store/search-term';
-  import Icon from '$lib/ui/Icon.svelte';
+  import StatCard from '$lib/ui/StatCard.svelte';
 
   let { data } = $props();
-  let tableData = $derived(data.tableData);
 
-  let filteredTableData = $derived(tableData.filter((row) => {
-    return (
-      row.scenario.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      row.feature.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      row.organization.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      row.organizationId.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      row.tags.some((tag) => tag.toLowerCase().includes($searchTerm.toLowerCase())) ||
-      row.owner.toLowerCase().includes($searchTerm.toLowerCase()) ||
-      row.team.toLowerCase().includes($searchTerm.toLowerCase())
-    );
-  }));
-
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape") {
-      $searchTerm = "";
-    }
-  }
-
-  async function handleReloadData() {
-    await store.reloadData();
-    await invalidateAll();
-  }
-
-  // @ts-expect-error - for debugging
-  window.p = store;
+  let stats = $derived(data.stats);
+  let brokenScenarios = $derived(data.brokenScenarios);
+  let orgsWithoutTests = $derived(data.orgsWithoutTests);
+  let teamBreakdown = $derived(data.teamBreakdown);
+  let ownerBreakdown = $derived(data.ownerBreakdown);
 </script>
 
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
+  <div>
+    <h1 class="text-xl font-semibold text-base-content mb-1">Dashboard</h1>
+    <p class="text-sm text-base-content/60">Overview of your e2e test suite</p>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+    <StatCard
+      title="Features"
+      value={stats.featureCount}
+      subtitle="{stats.scenarioCount} scenarios"
+      href="/features"
+    />
+    <StatCard
+      title="Organizations"
+      value={stats.organizationCount}
+      subtitle="{stats.teamCount} teams, {stats.ownerCount} owners"
+      href="/organizations"
+    />
+    <StatCard
+      title="Issues"
+      value={stats.brokenCount}
+      variant={stats.brokenCount > 0 ? 'error' : 'success'}
+    />
+  </div>
+
+  {#if brokenScenarios.length > 0}
     <div>
-      <h1 class="text-xl font-semibold text-base-content mb-1">Tests</h1>
-      <p class="text-sm text-base-content/60">Browse scenarios and features</p>
+      <h2 class="section-title">Broken Tests</h2>
+      <div class="card-clean overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th>Feature</th>
+                <th>Organization</th>
+                <th>Owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each brokenScenarios as scenario}
+                <tr>
+                  <td>
+                    <a href="/scenario/{scenario.id}" class="text-error hover:underline">{scenario.name}</a>
+                  </td>
+                  <td>
+                    <a href="/feature/{scenario.featureId}" class="link-subtle hover:underline">{scenario.featureName}</a>
+                  </td>
+                  <td>
+                    <a href="/organization/{scenario.organizationId}" class="link-subtle hover:underline">{scenario.organizationName}</a>
+                  </td>
+                  <td>
+                    {#if scenario.organizationOwnerAvatar}
+                      <div class="flex items-center gap-2">
+                        <img src={scenario.organizationOwnerAvatar} alt={scenario.organizationOwner} class="w-6 h-6 rounded-full" />
+                        <a href="/owner/{scenario.organizationOwner}" class="link-subtle hover:underline">{scenario.organizationOwner}</a>
+                      </div>
+                    {:else}
+                      <a href="/owner/{scenario.organizationOwner}" class="link-subtle hover:underline">{scenario.organizationOwner}</a>
+                    {/if}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    <span class="text-sm text-base-content/50 font-medium">{tableData.length} scenarios</span>
+  {/if}
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="flex flex-col">
+      <h2 class="section-title">By Team</h2>
+      <div class="card-clean overflow-hidden flex-1">
+        <div class="overflow-x-auto max-h-80">
+          <table class="table table-sm">
+            <thead class="sticky top-0">
+              <tr>
+                <th>Team</th>
+                <th class="text-right">Scenarios</th>
+                <th class="text-right">Broken</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each teamBreakdown as row}
+                <tr>
+                  <td>
+                    <a href="/team/{row.team}" class="link-subtle hover:underline">{row.team}</a>
+                  </td>
+                  <td class="text-right font-medium">{row.scenarioCount}</td>
+                  <td class="text-right {row.brokenCount > 0 ? 'text-error font-medium' : 'text-base-content/40'}">{row.brokenCount}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col">
+      <h2 class="section-title">By Owner</h2>
+      <div class="card-clean overflow-hidden flex-1">
+        <div class="overflow-x-auto max-h-80">
+          <table class="table table-sm">
+            <thead class="sticky top-0">
+              <tr>
+                <th>Owner</th>
+                <th class="text-right">Scenarios</th>
+                <th class="text-right">Broken</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each ownerBreakdown as row}
+                <tr>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      {#if row.avatar}
+                        <img src={row.avatar} alt={row.owner} class="w-6 h-6 rounded-full" />
+                      {/if}
+                      <a href="/owner/{row.owner}" class="link-subtle hover:underline">{row.owner}</a>
+                    </div>
+                  </td>
+                  <td class="text-right font-medium">{row.scenarioCount}</td>
+                  <td class="text-right {row.brokenCount > 0 ? 'text-error font-medium' : 'text-base-content/40'}">{row.brokenCount}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="flex items-center gap-3">
-    <div class="relative flex-1 max-w-md">
-      <input
-        type="text"
-        class="input input-sm w-full pl-9"
-        placeholder="Search scenarios, features, tags..."
-        bind:value={$searchTerm}
-        onkeydown={handleKeydown}
-      />
-      <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+  {#if orgsWithoutTests.length > 0}
+    <div>
+      <h2 class="section-title">Organizations Without Tests</h2>
+      <div class="card-clean overflow-hidden">
+        <div class="overflow-x-auto max-h-60">
+          <table class="table table-sm">
+            <thead class="sticky top-0">
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Team</th>
+                <th>Owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each orgsWithoutTests as org}
+                <tr class="text-base-content/50">
+                  <td>
+                    <a href="/organization/{org.id}" class="hover:underline font-mono text-xs">{org.id}</a>
+                  </td>
+                  <td>{org.name}</td>
+                  <td>
+                    <a href="/team/{org.teamName}" class="hover:underline">{org.teamName}</a>
+                  </td>
+                  <td>
+                    <a href="/owner/{org.ownerName}" class="hover:underline">{org.ownerName}</a>
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-
-    <button
-      class="btn btn-sm btn-ghost"
-      onclick={handleReloadData}
-      title="Reload data"
-    >
-      <Icon name="reload" class="h-4 w-4" />
-    </button>
-  </div>
-
-  <div class="card-clean overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th class="w-12">Owner</th>
-            <th>Scenario</th>
-            <th>Feature</th>
-            <th>Organization</th>
-            <th>Team</th>
-            <th class="text-right">Tags</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each filteredTableData as td}
-            <tr class={td.isBroken ? 'text-error' : ''}>
-              <td class="text-center">
-                {#if td.ownerAvatar}
-                  <a href="/owner/{td.owner}">
-                    <img src={td.ownerAvatar} alt={td.owner} class="w-7 h-7 rounded-full mx-auto" />
-                  </a>
-                {:else}
-                  <a href="/owner/{td.owner}" class="text-xs link-subtle hover:underline">{td.owner.slice(0, 2)}</a>
-                {/if}
-              </td>
-              <td>
-                <a href="/scenario/{td.scenarioId}" class="link-subtle hover:underline {td.isBroken ? 'text-error' : ''}">{td.scenario}</a>
-              </td>
-              <td>
-                <a href="/feature/{td.featureId}" class="link-subtle hover:underline">{td.feature}</a>
-              </td>
-              <td>
-                <a href="/organization/{td.organizationId}" class="link-subtle hover:underline font-mono text-xs" title={td.organization}>{td.organizationId}</a>
-              </td>
-              <td>
-                <a href="/team/{td.team}" class="link-subtle hover:underline">{td.team}</a>
-              </td>
-              <td class="text-right">
-                <div class="flex flex-wrap justify-end gap-1">
-                  {#each td.tags as tag}
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {tag.includes('broken') ? 'bg-error/15 text-error' : 'bg-base-content/10 text-base-content/70'}">{tag}</span>
-                  {/each}
-                </div>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  {#if $searchTerm}
-    <p class="text-sm text-base-content/50">
-      Showing {filteredTableData.length} of {tableData.length} scenarios
-    </p>
   {/if}
 </div>

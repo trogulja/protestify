@@ -8,8 +8,8 @@
   };
 
   const mainNav: NavItem[] = [
-    { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { href: '/', label: 'Tests', icon: 'tests' },
+    { href: '/', label: 'Dashboard', icon: 'dashboard' },
+    { href: '/features', label: 'Features', icon: 'tests' },
     { href: '/organizations', label: 'Organizations', icon: 'organizations' },
     { href: '/steps', label: 'Steps', icon: 'steps' },
   ];
@@ -21,7 +21,10 @@
 
   function isActive(href: string, currentPath: string): boolean {
     if (href === '/') {
-      return currentPath === '/' || currentPath.startsWith('/scenario') || currentPath.startsWith('/feature') || currentPath.startsWith('/owner') || currentPath.startsWith('/team');
+      return currentPath === '/';
+    }
+    if (href === '/features') {
+      return currentPath === '/features' || currentPath.startsWith('/scenario') || currentPath.startsWith('/feature/') || currentPath.startsWith('/owner') || currentPath.startsWith('/team');
     }
     return currentPath.startsWith(href);
   }
