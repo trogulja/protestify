@@ -10,46 +10,36 @@
   let ownerBreakdown = $derived(data.ownerBreakdown);
 </script>
 
-<div class="space-y-8">
+<div class="space-y-6">
   <div>
-    <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
+    <h1 class="text-xl font-semibold text-base-content mb-1">Dashboard</h1>
+    <p class="text-sm text-base-content/60">Overview of your e2e test suite</p>
+  </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <StatCard
-        title="Features"
-        value={stats.featureCount}
-        variant="info"
-      />
-      <StatCard
-        title="Scenarios"
-        value={stats.scenarioCount}
-        variant="info"
-      />
-      <StatCard
-        title="Organizations"
-        value={stats.organizationCount}
-        href="/organizations"
-      />
-      <StatCard
-        title="Teams"
-        value={stats.teamCount}
-      />
-      <StatCard
-        title="Owners"
-        value={stats.ownerCount}
-      />
-      <StatCard
-        title="Broken Tests"
-        value={stats.brokenCount}
-        variant={stats.brokenCount > 0 ? 'error' : 'success'}
-      />
-    </div>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+    <StatCard
+      title="Features"
+      value={stats.featureCount}
+      subtitle="{stats.scenarioCount} scenarios"
+      href="/"
+    />
+    <StatCard
+      title="Organizations"
+      value={stats.organizationCount}
+      subtitle="{stats.teamCount} teams, {stats.ownerCount} owners"
+      href="/organizations"
+    />
+    <StatCard
+      title="Issues"
+      value={stats.brokenCount}
+      variant={stats.brokenCount > 0 ? 'error' : 'success'}
+    />
   </div>
 
   {#if brokenScenarios.length > 0}
     <div>
-      <h2 class="text-xl font-semibold mb-4">Broken Tests</h2>
-      <div class="card bg-base-100 border shadow-sm">
+      <h2 class="section-title">Broken Tests</h2>
+      <div class="card-clean overflow-hidden">
         <div class="overflow-x-auto">
           <table class="table table-sm">
             <thead>
@@ -62,28 +52,24 @@
             </thead>
             <tbody>
               {#each brokenScenarios as scenario}
-                <tr class="text-error">
+                <tr>
                   <td>
-                    <a href="/scenario/{scenario.id}" class="link link-hover">{scenario.name}</a>
+                    <a href="/scenario/{scenario.id}" class="text-error hover:underline">{scenario.name}</a>
                   </td>
                   <td>
-                    <a href="/feature/{scenario.featureId}" class="link link-hover">{scenario.featureName}</a>
+                    <a href="/feature/{scenario.featureId}" class="link-subtle hover:underline">{scenario.featureName}</a>
                   </td>
                   <td>
-                    <a href="/organization/{scenario.organizationId}" class="link link-hover">{scenario.organizationName}</a>
+                    <a href="/organization/{scenario.organizationId}" class="link-subtle hover:underline">{scenario.organizationName}</a>
                   </td>
                   <td>
                     {#if scenario.organizationOwnerAvatar}
                       <div class="flex items-center gap-2">
-                        <div class="avatar">
-                          <div class="w-6 rounded">
-                            <img src={scenario.organizationOwnerAvatar} alt={scenario.organizationOwner} />
-                          </div>
-                        </div>
-                        <a href="/owner/{scenario.organizationOwner}" class="link link-hover">{scenario.organizationOwner}</a>
+                        <img src={scenario.organizationOwnerAvatar} alt={scenario.organizationOwner} class="w-6 h-6 rounded-full" />
+                        <a href="/owner/{scenario.organizationOwner}" class="link-subtle hover:underline">{scenario.organizationOwner}</a>
                       </div>
                     {:else}
-                      <a href="/owner/{scenario.organizationOwner}" class="link link-hover">{scenario.organizationOwner}</a>
+                      <a href="/owner/{scenario.organizationOwner}" class="link-subtle hover:underline">{scenario.organizationOwner}</a>
                     {/if}
                   </td>
                 </tr>
@@ -95,13 +81,13 @@
     </div>
   {/if}
 
-  <div class="grid md:grid-cols-2 gap-8">
+  <div class="grid md:grid-cols-2 gap-6">
     <div>
-      <h2 class="text-xl font-semibold mb-4">By Team</h2>
-      <div class="card bg-base-100 border shadow-sm">
+      <h2 class="section-title">By Team</h2>
+      <div class="card-clean overflow-hidden">
         <div class="overflow-x-auto max-h-80">
           <table class="table table-sm">
-            <thead class="sticky top-0 bg-base-100">
+            <thead class="sticky top-0">
               <tr>
                 <th>Team</th>
                 <th class="text-right">Scenarios</th>
@@ -112,10 +98,10 @@
               {#each teamBreakdown as row}
                 <tr>
                   <td>
-                    <a href="/team/{row.team}" class="link link-hover">{row.team}</a>
+                    <a href="/team/{row.team}" class="link-subtle hover:underline">{row.team}</a>
                   </td>
-                  <td class="text-right">{row.scenarioCount}</td>
-                  <td class="text-right {row.brokenCount > 0 ? 'text-error' : ''}">{row.brokenCount}</td>
+                  <td class="text-right font-medium">{row.scenarioCount}</td>
+                  <td class="text-right {row.brokenCount > 0 ? 'text-error font-medium' : 'text-base-content/40'}">{row.brokenCount}</td>
                 </tr>
               {/each}
             </tbody>
@@ -125,11 +111,11 @@
     </div>
 
     <div>
-      <h2 class="text-xl font-semibold mb-4">By Owner</h2>
-      <div class="card bg-base-100 border shadow-sm">
+      <h2 class="section-title">By Owner</h2>
+      <div class="card-clean overflow-hidden">
         <div class="overflow-x-auto max-h-80">
           <table class="table table-sm">
-            <thead class="sticky top-0 bg-base-100">
+            <thead class="sticky top-0">
               <tr>
                 <th>Owner</th>
                 <th class="text-right">Scenarios</th>
@@ -142,17 +128,13 @@
                   <td>
                     <div class="flex items-center gap-2">
                       {#if row.avatar}
-                        <div class="avatar">
-                          <div class="w-6 rounded">
-                            <img src={row.avatar} alt={row.owner} />
-                          </div>
-                        </div>
+                        <img src={row.avatar} alt={row.owner} class="w-6 h-6 rounded-full" />
                       {/if}
-                      <a href="/owner/{row.owner}" class="link link-hover">{row.owner}</a>
+                      <a href="/owner/{row.owner}" class="link-subtle hover:underline">{row.owner}</a>
                     </div>
                   </td>
-                  <td class="text-right">{row.scenarioCount}</td>
-                  <td class="text-right {row.brokenCount > 0 ? 'text-error' : ''}">{row.brokenCount}</td>
+                  <td class="text-right font-medium">{row.scenarioCount}</td>
+                  <td class="text-right {row.brokenCount > 0 ? 'text-error font-medium' : 'text-base-content/40'}">{row.brokenCount}</td>
                 </tr>
               {/each}
             </tbody>
@@ -164,11 +146,11 @@
 
   {#if orgsWithoutTests.length > 0}
     <div>
-      <h2 class="text-xl font-semibold mb-4">Organizations Without Tests</h2>
-      <div class="card bg-base-100 border shadow-sm">
+      <h2 class="section-title">Organizations Without Tests</h2>
+      <div class="card-clean overflow-hidden">
         <div class="overflow-x-auto max-h-60">
           <table class="table table-sm">
-            <thead class="sticky top-0 bg-base-100">
+            <thead class="sticky top-0">
               <tr>
                 <th>ID</th>
                 <th>Name</th>
@@ -178,16 +160,16 @@
             </thead>
             <tbody>
               {#each orgsWithoutTests as org}
-                <tr class="opacity-60">
+                <tr class="text-base-content/50">
                   <td>
-                    <a href="/organization/{org.id}" class="link link-hover">{org.id}</a>
+                    <a href="/organization/{org.id}" class="hover:underline font-mono text-xs">{org.id}</a>
                   </td>
                   <td>{org.name}</td>
                   <td>
-                    <a href="/team/{org.teamName}" class="link link-hover">{org.teamName}</a>
+                    <a href="/team/{org.teamName}" class="hover:underline">{org.teamName}</a>
                   </td>
                   <td>
-                    <a href="/owner/{org.ownerName}" class="link link-hover">{org.ownerName}</a>
+                    <a href="/owner/{org.ownerName}" class="hover:underline">{org.ownerName}</a>
                   </td>
                 </tr>
               {/each}

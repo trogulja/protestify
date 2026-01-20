@@ -27,56 +27,78 @@
   }
 </script>
 
-<aside class="w-56 min-h-full bg-base-200 text-base-content flex flex-col">
-  <ul class="menu p-2 flex-1">
-    {#each mainNav as item}
-      <li>
-        <a
-          href={item.href}
-          class="flex items-center gap-3 {isActive(item.href, $page.url.pathname) ? 'active' : ''}"
-        >
-          {#if item.icon === 'dashboard'}
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="M13 9V3h8v6zM3 13V3h8v10zm10 8V11h8v10zM3 21v-6h8v6z"/></svg>
-          {:else if item.icon === 'tests'}
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4v16h16V4zm2 2h12v2H6zm0 4h12v2H6zm0 4h12v2H6z"/></svg>
-          {:else if item.icon === 'organizations'}
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="M6 21v-9H2l10-9l10 9h-4v9zm6-7.7l2.1-2.1l1.4 1.4L12 16.1l-3.5-3.5l1.4-1.4z"/></svg>
-          {:else if item.icon === 'steps'}
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91c4.59-1.15 8-5.86 8-10.91V5zm-1.06 13.54L7.4 12l1.41-1.41l2.12 2.12l4.24-4.24l1.41 1.41z"/></svg>
-          {:else if item.icon === 'docs'}
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="M7.616 21q-1.085 0-1.85-.766Q5 19.47 5 18.385V6q0-1.258.871-2.129T8 3h11v13.77q-.663 0-1.14.475t-.475 1.14t.476 1.139T19 20v1zm.769-5.23h1V4h-1zM7.615 20h9.364q-.285-.33-.44-.732q-.155-.4-.155-.884q0-.457.152-.87t.443-.745H7.616q-.689 0-1.152.476T6 18.385q0 .688.464 1.151T7.616 20"/></svg>
-          {:else if item.icon === 'graphs'}
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="M3 21v-2h2V9h4v10h2V5h4v14h2V11h4v10h2v2z"/></svg>
-          {/if}
-          {item.label}
-        </a>
-      </li>
-    {/each}
+<aside class="w-56 min-h-full sidebar flex flex-col">
+  <nav class="flex-1 p-3">
+    <ul class="space-y-1">
+      {#each mainNav as item}
+        <li>
+          <a
+            href={item.href}
+            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+              {isActive(item.href, $page.url.pathname)
+                ? 'bg-primary/10 text-primary'
+                : 'text-base-content/70 hover:bg-base-content/5 hover:text-base-content'}"
+          >
+            <span class="w-5 h-5 flex items-center justify-center opacity-70">
+              {#if item.icon === 'dashboard'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+              {:else if item.icon === 'tests'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/><path d="m9 14 2 2 4-4"/></svg>
+              {:else if item.icon === 'organizations'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+              {:else if item.icon === 'steps'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+              {:else if item.icon === 'docs'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/></svg>
+              {:else if item.icon === 'graphs'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16l4-8 4 5 4-8"/></svg>
+              {/if}
+            </span>
+            {item.label}
+          </a>
+        </li>
+      {/each}
+    </ul>
 
-    <li class="menu-title mt-4">
-      <span class="text-xs uppercase tracking-wider opacity-60">Resources</span>
-    </li>
+    <div class="mt-6 mb-2 px-3">
+      <span class="text-xs font-semibold uppercase tracking-wider text-base-content/40">Resources</span>
+    </div>
 
-    {#each secondaryNav as item}
-      <li>
-        <a
-          href={item.href}
-          class="flex items-center gap-3 {isActive(item.href, $page.url.pathname) ? 'active' : ''}"
-        >
-          {#if item.icon === 'docs'}
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="M7.616 21q-1.085 0-1.85-.766Q5 19.47 5 18.385V6q0-1.258.871-2.129T8 3h11v13.77q-.663 0-1.14.475t-.475 1.14t.476 1.139T19 20v1zm.769-5.23h1V4h-1zM7.615 20h9.364q-.285-.33-.44-.732q-.155-.4-.155-.884q0-.457.152-.87t.443-.745H7.616q-.689 0-1.152.476T6 18.385q0 .688.464 1.151T7.616 20"/></svg>
-          {:else if item.icon === 'graphs'}
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="M3 21v-2h2V9h4v10h2V5h4v14h2V11h4v10h2v2z"/></svg>
-          {/if}
-          {item.label}
-        </a>
-      </li>
-    {/each}
-  </ul>
+    <ul class="space-y-1">
+      {#each secondaryNav as item}
+        <li>
+          <a
+            href={item.href}
+            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+              {isActive(item.href, $page.url.pathname)
+                ? 'bg-primary/10 text-primary'
+                : 'text-base-content/70 hover:bg-base-content/5 hover:text-base-content'}"
+          >
+            <span class="w-5 h-5 flex items-center justify-center opacity-70">
+              {#if item.icon === 'docs'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/></svg>
+              {:else if item.icon === 'graphs'}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16l4-8 4 5 4-8"/></svg>
+              {/if}
+            </span>
+            {item.label}
+          </a>
+        </li>
+      {/each}
+    </ul>
+  </nav>
 
-  <div class="p-4 border-t border-base-300">
-    <a href="/settings" class="btn btn-ghost btn-sm w-full justify-start gap-3">
-      <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" viewBox="0 0 24 24"><path fill="currentColor" d="m10.135 21l-.362-2.892q-.479-.145-1.035-.454q-.557-.31-.947-.664l-2.668 1.135l-1.865-3.25l2.306-1.739q-.045-.27-.073-.558q-.03-.288-.03-.559q0-.252.03-.53q.028-.278.073-.626L3.258 9.126l1.865-3.212L7.771 7.03q.448-.373.97-.673q.52-.3 1.013-.464L10.134 3h3.732l.361 2.912q.575.202 1.016.463t.909.654l2.725-1.115l1.865 3.211l-2.382 1.796q.082.31.092.569t.01.51q0 .233-.02.491q-.019.259-.088.626l2.344 1.758l-1.865 3.25l-2.681-1.154q-.467.393-.94.673t-.985.445L13.866 21zm1.838-6.5q1.046 0 1.773-.727T14.473 12t-.727-1.773t-1.773-.727q-1.052 0-1.776.727T9.473 12t.724 1.773t1.776.727"/></svg>
+  <div class="p-3 border-t border-base-300">
+    <a
+      href="/settings"
+      class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+        {$page.url.pathname === '/settings'
+          ? 'bg-primary/10 text-primary'
+          : 'text-base-content/70 hover:bg-base-content/5 hover:text-base-content'}"
+    >
+      <span class="w-5 h-5 flex items-center justify-center opacity-70">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      </span>
       Settings
     </a>
   </div>

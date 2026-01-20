@@ -2,51 +2,37 @@
   type StatCardProps = {
     title: string;
     value: number | string;
-    description?: string;
+    subtitle?: string;
     variant?: 'default' | 'success' | 'warning' | 'error' | 'info';
     href?: string;
   };
 
-  let { title, value, description, variant = 'default', href }: StatCardProps = $props();
-
-  const variantClasses: Record<string, string> = {
-    default: 'bg-base-100',
-    success: 'bg-success/10 border-success/20',
-    warning: 'bg-warning/10 border-warning/20',
-    error: 'bg-error/10 border-error/20',
-    info: 'bg-info/10 border-info/20',
-  };
-
-  const valueClasses: Record<string, string> = {
-    default: 'text-base-content',
-    success: 'text-success',
-    warning: 'text-warning',
-    error: 'text-error',
-    info: 'text-info',
-  };
+  let { title, value, subtitle, variant = 'default', href }: StatCardProps = $props();
 </script>
 
 {#if href}
   <a
-    {href}
-    class="card border shadow-sm hover:shadow-md transition-shadow {variantClasses[variant]}"
+    href={href}
+    class="stat-card block cursor-pointer"
+    class:stat-card-error={variant === 'error'}
+    class:stat-card-success={variant === 'success'}
   >
-    <div class="card-body p-4">
-      <h3 class="card-title text-sm font-medium opacity-70">{title}</h3>
-      <p class="text-3xl font-bold {valueClasses[variant]}">{value}</p>
-      {#if description}
-        <p class="text-xs opacity-60">{description}</p>
-      {/if}
-    </div>
+    <span class="stat-card-label">{title}</span>
+    <div class="stat-card-value mt-2" class:text-error={variant === 'error'} class:text-success={variant === 'success'}>{value}</div>
+    {#if subtitle}
+      <p class="text-xs text-base-content/50">{subtitle}</p>
+    {/if}
   </a>
 {:else}
-  <div class="card border shadow-sm {variantClasses[variant]}">
-    <div class="card-body p-4">
-      <h3 class="card-title text-sm font-medium opacity-70">{title}</h3>
-      <p class="text-3xl font-bold {valueClasses[variant]}">{value}</p>
-      {#if description}
-        <p class="text-xs opacity-60">{description}</p>
-      {/if}
-    </div>
+  <div
+    class="stat-card"
+    class:stat-card-error={variant === 'error'}
+    class:stat-card-success={variant === 'success'}
+  >
+    <span class="stat-card-label">{title}</span>
+    <div class="stat-card-value mt-2" class:text-error={variant === 'error'} class:text-success={variant === 'success'}>{value}</div>
+    {#if subtitle}
+      <p class="text-xs text-base-content/50">{subtitle}</p>
+    {/if}
   </div>
 {/if}

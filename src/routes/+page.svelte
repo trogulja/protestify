@@ -34,78 +34,90 @@
   window.p = store;
 </script>
 
-<div class="container mb-4 flex gap-4">
-  <label class="input input-bordered input-sm flex items-center gap-2">
-    <input
-      type="text"
-      class="grow"
-      placeholder="Search"
-      bind:value={$searchTerm}
-      onkeydown={handleKeydown}
-    />
-    <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" viewBox="0 0 24 24"><path fill="currentColor" d="m19.485 20.154l-6.262-6.262q-.75.639-1.725.989t-1.96.35q-2.402 0-4.066-1.663T3.808 9.503T5.47 5.436t4.064-1.667t4.068 1.664T15.268 9.5q0 1.042-.369 2.017t-.97 1.668l6.262 6.261zM9.539 14.23q1.99 0 3.36-1.37t1.37-3.361t-1.37-3.36t-3.36-1.37t-3.361 1.37t-1.37 3.36t1.37 3.36t3.36 1.37"/></svg>
-  </label>
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-semibold text-base-content mb-1">Tests</h1>
+      <p class="text-sm text-base-content/60">Browse scenarios and features</p>
+    </div>
+    <span class="text-sm text-base-content/50 font-medium">{tableData.length} scenarios</span>
+  </div>
 
-  <div class="tooltip" data-tip="Reload data">
-    <button
-      class="btn btn-sm btn-neutral btn-square"
-      onclick={handleReloadData}
-    >
-      <Icon
-        name="reload"
-        class="h-4 w-4"
+  <div class="flex items-center gap-3">
+    <div class="relative flex-1 max-w-md">
+      <input
+        type="text"
+        class="input input-sm w-full pl-9"
+        placeholder="Search scenarios, features, tags..."
+        bind:value={$searchTerm}
+        onkeydown={handleKeydown}
       />
+      <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </div>
+
+    <button
+      class="btn btn-sm btn-ghost"
+      onclick={handleReloadData}
+      title="Reload data"
+    >
+      <Icon name="reload" class="h-4 w-4" />
     </button>
   </div>
-</div>
 
-<div>
-  <table class="table table-xs">
-    <thead>
-      <tr>
-        <th>owner</th>
-        <th>scenario</th>
-        <th>feature</th>
-        <th>organization</th>
-        <th>team</th>
-        <th>tags</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each filteredTableData as td}
-        <tr class:text-error={td.isBroken}>
-          <td class="text-center">
-            {#if td.ownerAvatar}
-              <div class="avatar">
-                <div class="w-8 rounded">
-                  <a href="/owner/{td.owner}"><img src="{td.ownerAvatar}" alt="{td.owner}" /></a>
+  <div class="card-clean overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th class="w-12">Owner</th>
+            <th>Scenario</th>
+            <th>Feature</th>
+            <th>Organization</th>
+            <th>Team</th>
+            <th class="text-right">Tags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each filteredTableData as td}
+            <tr class={td.isBroken ? 'text-error' : ''}>
+              <td class="text-center">
+                {#if td.ownerAvatar}
+                  <a href="/owner/{td.owner}">
+                    <img src={td.ownerAvatar} alt={td.owner} class="w-7 h-7 rounded-full mx-auto" />
+                  </a>
+                {:else}
+                  <a href="/owner/{td.owner}" class="text-xs link-subtle hover:underline">{td.owner.slice(0, 2)}</a>
+                {/if}
+              </td>
+              <td>
+                <a href="/scenario/{td.scenarioId}" class="link-subtle hover:underline {td.isBroken ? 'text-error' : ''}">{td.scenario}</a>
+              </td>
+              <td>
+                <a href="/feature/{td.featureId}" class="link-subtle hover:underline">{td.feature}</a>
+              </td>
+              <td>
+                <a href="/organization/{td.organizationId}" class="link-subtle hover:underline font-mono text-xs" title={td.organization}>{td.organizationId}</a>
+              </td>
+              <td>
+                <a href="/team/{td.team}" class="link-subtle hover:underline">{td.team}</a>
+              </td>
+              <td class="text-right">
+                <div class="flex flex-wrap justify-end gap-1">
+                  {#each td.tags as tag}
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {tag.includes('broken') ? 'bg-error/15 text-error' : 'bg-base-content/10 text-base-content/70'}">{tag}</span>
+                  {/each}
                 </div>
-              </div>
-            {:else}
-              <a href="/owner/{td.owner}" class="link link-hover">{td.owner}</a>
-            {/if}
-          </td>
-          <td>
-            <a href="/scenario/{td.scenarioId}" class="link link-hover">{td.scenario}</a>
-          </td>
-          <td>
-            <a href="/feature/{td.featureId}" class="link link-hover">{td.feature}</a>
-          </td>
-          <td class="text-center">
-            <div class="tooltip tooltip-top" data-tip={td.organization}>
-              <a href="/organization/{td.organizationId}" class="link link-hover">{td.organizationId}</a>
-            </div>
-          </td>
-          <td>
-            <a href="/team/{td.team}" class="link link-hover">{td.team}</a>
-          </td>
-          <td class="text-right">
-            {#each td.tags as tag}
-              <span class="badge {tag.includes('broken') ? 'badge-error' : 'badge-neutral'} badge-sm">{tag}</span>
-            {/each}
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {#if $searchTerm}
+    <p class="text-sm text-base-content/50">
+      Showing {filteredTableData.length} of {tableData.length} scenarios
+    </p>
+  {/if}
 </div>

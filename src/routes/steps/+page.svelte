@@ -20,7 +20,6 @@
     })
   );
 
-  // Compute stats
   let stats = $derived({
     total: data.steps.length,
     byCategory: STEP_CATEGORIES.reduce((acc, cat) => {
@@ -47,45 +46,61 @@
     const parts = fullPath.split('step_definitions/');
     return parts.length > 1 ? parts[1] : fullPath;
   }
+
+  const categoryBgColors: Record<StepCategory, string> = {
+    'Navigation': 'bg-primary/15 text-primary',
+    'Waits': 'bg-warning/15 text-warning',
+    'Assertions': 'bg-success/15 text-success',
+    'Data Setup': 'bg-info/15 text-info',
+    'Flags': 'bg-secondary/15 text-secondary',
+    'Actions': 'bg-accent/15 text-accent',
+    'Other': 'bg-base-content/10 text-base-content/70',
+  };
 </script>
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Step Definitions</h1>
-    <div class="badge badge-neutral">{data.steps.length} steps</div>
+    <div>
+      <h1 class="text-xl font-semibold text-base-content mb-1">Step Definitions</h1>
+      <p class="text-sm text-base-content/60">Browse and search cucumber step definitions</p>
+    </div>
+    <span class="text-sm text-base-content/50 font-medium">{data.steps.length} steps</span>
   </div>
 
   {#if data.error}
-    <div class="alert alert-error">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12 17q.425 0 .713-.288T13 16t-.288-.712T12 15t-.712.288T11 16t.288.713T12 17m-1-4h2V7h-2zm1 9q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>
-      <span>Failed to load steps: {data.error}</span>
+    <div class="flex items-center gap-2 px-4 py-3 rounded-lg bg-error/10 border border-error/20">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+      <span class="text-sm">Failed to load steps: {data.error}</span>
     </div>
   {:else}
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+    <div class="flex flex-wrap gap-2">
       {#each STEP_CATEGORIES as category}
         <button
-          class="btn btn-sm {filterCategory === category ? 'btn-primary' : 'btn-ghost'} justify-between"
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+            {filterCategory === category
+              ? categoryBgColors[category]
+              : 'bg-base-content/5 text-base-content/60 hover:bg-base-content/10'}"
           onclick={() => filterCategory = filterCategory === category ? '' : category}
         >
-          <span>{category}</span>
-          <span class="badge {CATEGORY_COLORS[category]} badge-sm">{stats.byCategory[category]}</span>
+          {category}
+          <span class="text-xs opacity-70">{stats.byCategory[category]}</span>
         </button>
       {/each}
     </div>
 
-    <div class="flex flex-wrap gap-4">
-      <label class="input input-bordered input-sm flex items-center gap-2 w-64">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="relative">
         <input
           type="text"
-          class="grow"
+          class="input input-sm w-64 pl-9"
           placeholder="Search patterns..."
           bind:value={searchTerm}
           onkeydown={handleKeydown}
         />
-        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"><path fill="currentColor" d="m19.485 20.154l-6.262-6.262q-.75.639-1.725.989t-1.96.35q-2.402 0-4.066-1.663T3.808 9.503T5.47 5.436t4.064-1.667t4.068 1.664T15.268 9.5q0 1.042-.369 2.017t-.97 1.668l6.262 6.261zM9.539 14.23q1.99 0 3.36-1.37t1.37-3.361t-1.37-3.36t-3.36-1.37t-3.361 1.37t-1.37 3.36t1.37 3.36t3.36 1.37"/></svg>
-      </label>
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </div>
 
-      <select class="select select-bordered select-sm" bind:value={filterKeyword}>
+      <select class="select select-sm" bind:value={filterKeyword}>
         <option value="">All Keywords</option>
         <option value="Given">Given ({stats.byKeyword.Given})</option>
         <option value="When">When ({stats.byKeyword.When})</option>
@@ -94,48 +109,48 @@
         <option value="But">But ({stats.byKeyword.But})</option>
       </select>
 
-      <label class="label cursor-pointer gap-2">
+      <label class="flex items-center gap-2 cursor-pointer">
         <input type="checkbox" class="toggle toggle-sm toggle-warning" bind:checked={showProblematicOnly} />
-        <span class="label-text">
+        <span class="text-sm text-base-content/70">
           Problematic only
           {#if stats.problematic > 0}
-            <span class="badge badge-warning badge-xs">{stats.problematic}</span>
+            <span class="inline-flex items-center justify-center min-w-[1.25rem] px-1 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning ml-1">{stats.problematic}</span>
           {/if}
         </span>
       </label>
     </div>
 
-    <div class="card bg-base-100 border shadow-sm">
+    <div class="card-clean overflow-hidden">
       <div class="overflow-x-auto">
         <table class="table table-sm">
           <thead>
             <tr>
               <th class="w-20">Keyword</th>
               <th>Pattern</th>
-              <th class="w-24">Category</th>
+              <th class="w-28">Category</th>
               <th>File</th>
-              <th class="w-16">Line</th>
+              <th class="w-16 text-right">Line</th>
             </tr>
           </thead>
           <tbody>
             {#each filteredSteps as step}
-              <tr class={step.is_problematic ? 'bg-warning/10' : ''}>
+              <tr class={step.is_problematic ? 'bg-warning/5' : ''}>
                 <td>
-                  <span class="badge badge-outline badge-sm">{step.keyword}</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-base-content/10">{step.keyword}</span>
                 </td>
                 <td>
-                  <code class="text-xs bg-base-200 px-1 rounded">{step.pattern}</code>
+                  <code class="text-xs bg-base-200 px-1.5 py-0.5 rounded font-mono">{step.pattern}</code>
                   {#if step.is_problematic && step.problem_reason}
-                    <span class="badge badge-warning badge-xs ml-2" title={step.problem_reason}>!</span>
+                    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-warning/15 text-warning text-xs ml-2" title={step.problem_reason}>!</span>
                   {/if}
                 </td>
                 <td>
-                  <span class="badge {CATEGORY_COLORS[step.category as StepCategory]} badge-sm">{step.category}</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {categoryBgColors[step.category as StepCategory]}">{step.category}</span>
                 </td>
-                <td class="text-xs opacity-70 font-mono">
+                <td class="text-xs text-base-content/60 font-mono">
                   {getRelativePath(step.file_path)}
                 </td>
-                <td class="text-xs opacity-70 font-mono">
+                <td class="text-xs text-base-content/60 font-mono text-right">
                   {step.line_number}
                 </td>
               </tr>
@@ -145,8 +160,8 @@
       </div>
     </div>
 
-    <div class="text-sm opacity-60">
+    <p class="text-sm text-base-content/50">
       Showing {filteredSteps.length} of {data.steps.length} step definitions
-    </div>
+    </p>
   {/if}
 </div>

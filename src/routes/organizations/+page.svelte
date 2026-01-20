@@ -8,7 +8,6 @@
   let filterOwner = $state('');
   let showClones = $state(false);
 
-  // Filter template organizations
   let filteredOrgs = $derived(
     data.templateOrgs.filter((org) => {
       const matchesSearch =
@@ -20,18 +19,15 @@
     })
   );
 
-  // Get clone groups that match filtered orgs
   let relevantCloneGroups = $derived.by(() => {
     const filteredNames = new Set(filteredOrgs.map(o => o.name));
     return data.cloneGroups.filter((group: CloneGroup) => filteredNames.has(group.template_name));
   });
 
-  // Count scenarios per org
   function getScenarioCount(orgName: string): number {
     return data.organizations.filter(o => o.name === orgName).reduce((acc, org) => acc + org.scenarios.length, 0);
   }
 
-  // Check if org has any scenarios
   function hasTests(orgName: string): boolean {
     return getScenarioCount(orgName) > 0;
   }
@@ -45,53 +41,56 @@
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Organizations</h1>
-    <div class="badge badge-neutral">{data.organizations.length} total</div>
+    <div>
+      <h1 class="text-xl font-semibold text-base-content mb-1">Organizations</h1>
+      <p class="text-sm text-base-content/60">Manage and explore test organizations</p>
+    </div>
+    <span class="text-sm text-base-content/50 font-medium">{data.organizations.length} total</span>
   </div>
 
-  <div class="flex flex-wrap gap-4">
-    <label class="input input-bordered input-sm flex items-center gap-2 w-64">
+  <div class="flex flex-wrap items-center gap-3">
+    <div class="relative">
       <input
         type="text"
-        class="grow"
+        class="input input-sm w-64 pl-9"
         placeholder="Search organizations..."
         bind:value={searchTerm}
         onkeydown={handleKeydown}
       />
-      <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"><path fill="currentColor" d="m19.485 20.154l-6.262-6.262q-.75.639-1.725.989t-1.96.35q-2.402 0-4.066-1.663T3.808 9.503T5.47 5.436t4.064-1.667t4.068 1.664T15.268 9.5q0 1.042-.369 2.017t-.97 1.668l6.262 6.261zM9.539 14.23q1.99 0 3.36-1.37t1.37-3.361t-1.37-3.36t-3.36-1.37t-3.361 1.37t-1.37 3.36t1.37 3.36t3.36 1.37"/></svg>
-    </label>
+      <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </div>
 
-    <select class="select select-bordered select-sm" bind:value={filterTeam}>
+    <select class="select select-sm" bind:value={filterTeam}>
       <option value="">All Teams</option>
       {#each data.teams as team}
         <option value={team.name}>{team.name}</option>
       {/each}
     </select>
 
-    <select class="select select-bordered select-sm" bind:value={filterOwner}>
+    <select class="select select-sm" bind:value={filterOwner}>
       <option value="">All Owners</option>
       {#each data.owners as owner}
         <option value={owner.name}>{owner.name}</option>
       {/each}
     </select>
 
-    <label class="label cursor-pointer gap-2">
-      <input type="checkbox" class="toggle toggle-sm" bind:checked={showClones} />
-      <span class="label-text">Show clones</span>
+    <label class="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" class="toggle toggle-sm toggle-primary" bind:checked={showClones} />
+      <span class="text-sm text-base-content/70">Show clones</span>
     </label>
   </div>
 
   {#if data.cloneGroups.length > 0}
-    <div class="alert alert-info">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24"><path fill="currentColor" d="M11 17h2v-6h-2zm1-8q.425 0 .713-.288T13 8t-.288-.712T12 7t-.712.288T11 8t.288.713T12 9m0 13q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>
-      <span>
+    <div class="flex items-center gap-2 px-4 py-3 rounded-lg bg-info/10 border border-info/20">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      <span class="text-sm">
         Found <strong>{data.cloneGroups.length}</strong> template organizations with
         <strong>{data.cloneGroups.reduce((acc: number, g: CloneGroup) => acc + g.clones.length, 0)}</strong> test clones
       </span>
     </div>
   {/if}
 
-  <div class="card bg-base-100 border shadow-sm">
+  <div class="card-clean overflow-hidden">
     <div class="overflow-x-auto">
       <table class="table table-sm">
         <thead>
@@ -108,42 +107,38 @@
           {#each filteredOrgs as org}
             {@const cloneGroup = relevantCloneGroups.find((g: CloneGroup) => g.template_name === org.name)}
             {@const scenarioCount = getScenarioCount(org.name)}
-            <tr class:opacity-50={!hasTests(org.name)}>
+            <tr class={!hasTests(org.name) ? 'text-base-content/50' : ''}>
               <td>
-                <a href="/organization/{org.id}" class="link link-hover font-mono">{org.id}</a>
+                <a href="/organization/{org.id}" class="font-mono text-xs hover:underline">{org.id}</a>
               </td>
               <td>
-                <a href="/organization/{org.id}" class="link link-hover">{org.name}</a>
+                <a href="/organization/{org.id}" class="link-subtle hover:underline">{org.name}</a>
               </td>
               <td>
-                <a href="/team/{org.teamName}" class="link link-hover">{org.teamName}</a>
+                <a href="/team/{org.teamName}" class="link-subtle hover:underline">{org.teamName}</a>
               </td>
               <td>
                 {#if org.owner?.avatar}
                   <div class="flex items-center gap-2">
-                    <div class="avatar">
-                      <div class="w-6 rounded">
-                        <img src={org.owner.avatar} alt={org.ownerName} />
-                      </div>
-                    </div>
-                    <a href="/owner/{org.ownerName}" class="link link-hover">{org.ownerName}</a>
+                    <img src={org.owner.avatar} alt={org.ownerName} class="w-6 h-6 rounded-full" />
+                    <a href="/owner/{org.ownerName}" class="link-subtle hover:underline">{org.ownerName}</a>
                   </div>
                 {:else}
-                  <a href="/owner/{org.ownerName}" class="link link-hover">{org.ownerName}</a>
+                  <a href="/owner/{org.ownerName}" class="link-subtle hover:underline">{org.ownerName}</a>
                 {/if}
               </td>
               <td class="text-right">
                 {#if scenarioCount > 0}
-                  <span class="badge badge-success badge-sm">{scenarioCount}</span>
+                  <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success">{scenarioCount}</span>
                 {:else}
-                  <span class="badge badge-ghost badge-sm">0</span>
+                  <span class="text-base-content/30">0</span>
                 {/if}
               </td>
               <td class="text-right">
                 {#if cloneGroup}
-                  <span class="badge badge-info badge-sm">{cloneGroup.clones.length}</span>
+                  <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded-full text-xs font-medium bg-info/15 text-info">{cloneGroup.clones.length}</span>
                 {:else}
-                  -
+                  <span class="text-base-content/30">-</span>
                 {/if}
               </td>
             </tr>
@@ -152,10 +147,10 @@
               {#each cloneGroup.clones as clone}
                 <tr class="bg-base-200/50">
                   <td class="pl-8">
-                    <span class="font-mono text-xs opacity-70">{clone.org_id}</span>
+                    <span class="font-mono text-xs text-base-content/50">{clone.org_id}</span>
                   </td>
-                  <td colspan="3" class="text-sm opacity-70">
-                    <span class="badge badge-outline badge-xs mr-2">TEMP-{clone.clone_id}</span>
+                  <td colspan="3" class="text-sm text-base-content/60">
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-base-content/10 mr-2">TEMP-{clone.clone_id}</span>
                     {clone.org_name}
                   </td>
                   <td></td>
@@ -169,7 +164,7 @@
     </div>
   </div>
 
-  <div class="text-sm opacity-60">
+  <p class="text-sm text-base-content/50">
     Showing {filteredOrgs.length} of {data.templateOrgs.length} template organizations
-  </div>
+  </p>
 </div>
