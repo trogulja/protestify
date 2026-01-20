@@ -3,9 +3,8 @@ use phf::phf_map;
 use regex::Regex;
 use serde::Serialize;
 use std::collections::BTreeSet;
-use std::fs::File;
 use std::io::{BufRead, BufReader, Result};
-use std::path::Path;
+use tokio::fs::read;
 use uuid::Uuid;
 use walkdir::WalkDir;
 
@@ -101,14 +100,19 @@ fn get_target_string(name: &str, flag: Option<&str>, date: Option<&str>) -> Stri
     )
 }
 
-pub fn get_all_features(base_path: &str) -> Result<(Vec<Feature>, Vec<Scenario>)> {
+pub async fn get_all_features(base_path: String) -> Result<(Vec<Feature>, Vec<Scenario>)> {
     let mut features = Vec::new();
     let mut scenarios = Vec::new();
 
     for entry in WalkDir::new(base_path).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
         if path.is_file() && path.extension().and_then(std::ffi::OsStr::to_str) == Some("feature") {
-            let (file_feature, file_scenarios) = read_feature_files(path)?;
+            let contents = read(&path).await?;
+            let reader = BufReader::new(&contents[..]);
+            let file_path = path.to_string_lossy().into_owned();
+
+            let (file_feature, file_scenarios) = process_file_content(reader, file_path).await?;
+
             features.push(file_feature);
             scenarios.extend(file_scenarios);
         }
@@ -117,15 +121,7 @@ pub fn get_all_features(base_path: &str) -> Result<(Vec<Feature>, Vec<Scenario>)
     Ok((features, scenarios))
 }
 
-fn read_feature_files<P: AsRef<Path>>(path: P) -> Result<(Feature, Vec<Scenario>)> {
-    let file = File::open(path.as_ref())?;
-    let reader = BufReader::new(file);
-    let file_path = path.as_ref().to_str().unwrap().to_string();
-
-    process_file_content(reader, file_path)
-}
-
-fn process_file_content<R: BufRead>(reader: R, path: String) -> Result<(Feature, Vec<Scenario>)> {
+async fn process_file_content<R: BufRead>(reader: R, path: String) -> Result<(Feature, Vec<Scenario>)> {
     let mut feature: Feature = Feature {
         id: Uuid::new_v4().to_string(),
         name: String::new(),
@@ -275,364 +271,558 @@ mod tests {
     use std::io::Cursor;
     use uuid::Uuid;
 
-    #[test]
-    fn test_get_target_string_valid_name() {
-        let target = get_target_string("budgets", Some("flag1"), Some("2023-10-01"));
-        assert_eq!(target, "budgets;/financials/budgets;flag1;2023-10-01");
+    mod capture_group_tests {
+        use super::*;
 
-        let target = get_target_string("companies", None, Some("2023-10-03"));
-        assert_eq!(target, "companies;/contacts/companies;;2023-10-03");
+        #[test]
+        fn test_capture_group_organization() {
+            let re = &ORGANIZATION_RE;
+            assert_eq!(
+                capture_group(re, r#"current organization is "Test Org""#),
+                Some("Test Org")
+            );
+            assert_eq!(
+                capture_group(re, r#"current organization is "Test Org With Spaces""#),
+                Some("Test Org With Spaces")
+            );
+            assert_eq!(capture_group(re, r#"current organization is ""#), None);
+            assert_eq!(capture_group(re, r#"something else"#), None);
+        }
 
-        let target = get_target_string("contacts", Some("flag3"), None);
-        assert_eq!(target, "contacts;/contacts/people;flag3;");
+        #[test]
+        fn test_capture_group_screen() {
+            let re = &SCREEN_RE;
+            assert_eq!(
+                capture_group(re, r#"user is on a "budgets" screen"#),
+                Some("budgets")
+            );
+            assert_eq!(
+                capture_group(re, r#"user is on a "company time" screen"#),
+                Some("company time")
+            );
+            assert_eq!(capture_group(re, r#"user is on screen"#), None);
+            assert_eq!(capture_group(re, r#"something else"#), None);
+        }
 
-        let target = get_target_string("dashboards", None, None);
-        assert_eq!(target, "dashboards;/dashboards;;");
+        #[test]
+        fn test_capture_group_date() {
+            let re = &DATE_RE;
+            assert_eq!(
+                capture_group(re, r#"on date "2023-10-01""#),
+                Some("2023-10-01")
+            );
+            assert_eq!(capture_group(re, r#"on date ""#), None);
+            assert_eq!(capture_group(re, r#"something else"#), None);
+        }
+
+        #[test]
+        fn test_capture_group_flags() {
+            let re = &FLAGS_RE;
+            assert_eq!(
+                capture_group(re, r#"and flag "test_flag" is enabled"#),
+                Some("test_flag")
+            );
+            assert_eq!(
+                capture_group(re, r#"and flags "flag1,flag2" are enabled"#),
+                Some("flag1,flag2")
+            );
+            assert_eq!(capture_group(re, r#"and flag is enabled"#), None);
+            assert_eq!(capture_group(re, r#"something else"#), None);
+        }
     }
 
-    #[test]
-    fn test_get_target_string_invalid_name() {
-        let target = get_target_string("invalid", Some("flag1"), Some("2023-10-01"));
-        assert_eq!(target, "invalid;;flag1;2023-10-01");
+    mod target_string_tests {
+        use super::*;
 
-        let target = get_target_string("invalid2", None, Some("2023-10-03"));
-        assert_eq!(target, "invalid2;;;2023-10-03");
+        #[tokio::test]
+        async fn test_get_target_string_valid_name() {
+            let target = get_target_string("budgets", Some("flag1"), Some("2023-10-01"));
+            assert_eq!(target, "budgets;/financials/budgets;flag1;2023-10-01");
 
-        let target = get_target_string("invalid3", Some("flag3"), None);
-        assert_eq!(target, "invalid3;;flag3;");
+            let target = get_target_string("companies", None, Some("2023-10-03"));
+            assert_eq!(target, "companies;/contacts/companies;;2023-10-03");
 
-        let target = get_target_string("invalid4", None, None);
-        assert_eq!(target, "invalid4;;;");
+            let target = get_target_string("contacts", Some("flag3"), None);
+            assert_eq!(target, "contacts;/contacts/people;flag3;");
+
+            let target = get_target_string("dashboards", None, None);
+            assert_eq!(target, "dashboards;/dashboards;;");
+        }
+
+        #[tokio::test]
+        async fn test_get_target_string_invalid_name() {
+            let target = get_target_string("invalid", Some("flag1"), Some("2023-10-01"));
+            assert_eq!(target, "invalid;;flag1;2023-10-01");
+
+            let target = get_target_string("invalid2", None, Some("2023-10-03"));
+            assert_eq!(target, "invalid2;;;2023-10-03");
+
+            let target = get_target_string("invalid3", Some("flag3"), None);
+            assert_eq!(target, "invalid3;;flag3;");
+
+            let target = get_target_string("invalid4", None, None);
+            assert_eq!(target, "invalid4;;;");
+        }
     }
 
-    #[test]
-    fn test_process_file_content() {
-        let input = r#"
-            @broken @slow @feature
-            Feature: Feature name here
-            This is a feature description
-            broken into multiple lines
-            or something like that
+    mod get_all_features_tests {
+        use super::*;
+        use std::fs;
+        use std::path::Path;
+        use tempfile::tempdir;
 
-            @billing @bicker @annoy
-            Scenario Outline: "<user>" accesses "<query>" with "<shortcut>" on "<route>"
-                Given current organization is "Some Org LLC"
-                And I do all the steps
-                Then I should be in correct state
+        async fn create_test_file(dir: &Path, name: &str, content: &str) -> std::io::Result<()> {
+            fs::write(dir.join(name), content)
+        }
 
-                @mobile
-                Examples:
-                | user        | shortcut     | query          | route                             |
-                | Admin       | # Tasks      | Test ta        | /tasks/task/116046                |
+        #[tokio::test]
+        async fn test_get_all_features_empty_dir() {
+            let temp = tempdir().unwrap();
+            let (features, scenarios) = get_all_features(temp.path().to_str().unwrap().to_string())
+                .await
+                .unwrap();
 
-                @web
-                Examples:
-                | user        | shortcut     | query          | route                             |
-                | Admin       | ## Docs      | Project page   | /docs/doc/22981                   |
-                | Admin       | $$ Budgets   | Test project   | /financials/budgets/d/deal/62326  |
+            assert_eq!(features.len(), 0);
+            assert_eq!(scenarios.len(), 0);
+        }
 
-            Scenario: Another scenario
-                Given current organization is "Some Org LLC"
-                And I do all the steps
-                Then I should be in correct state
+        #[tokio::test]
+        async fn test_get_all_features_no_feature_files() {
+            let temp = tempdir().unwrap();
+            let dir = temp.path().to_owned();
 
-            Scenario: Another with description
-                We are trying to do something here that will be awesome
+            create_test_file(&dir, "test1.txt", "some content").await.unwrap();
+            create_test_file(&dir, "test2.md", "# Markdown").await.unwrap();
 
-                Given current organization is "Some Org LLC"
-                And I do all the steps
-                Then I should be in correct state
+            let (features, scenarios) = get_all_features(dir.to_str().unwrap().to_string())
+                .await
+                .unwrap();
+
+            assert_eq!(features.len(), 0);
+            assert_eq!(scenarios.len(), 0);
+        }
+
+        #[tokio::test]
+        async fn test_get_all_features_single_file() {
+            let temp = tempdir().unwrap();
+            let dir = temp.path().to_owned();
+
+            let content = r#"
+                Feature: Test feature
+                This is a test description
+
+                Scenario: Test scenario
+                    Given current organization is "Test Org"
+                    When I do something
+                    Then something happens
             "#;
-        let reader = Cursor::new(input);
-        let path = "some/file.feature".to_string();
-        let (feature, scenarios) = process_file_content(reader, path).unwrap();
 
-        assert!(Uuid::parse_str(&feature.id).is_ok());
-        assert_eq!(feature.name, "Feature name here");
-        assert_eq!(
-            feature.description,
-            "This is a feature description broken into multiple lines or something like that"
-        );
-        assert_eq!(feature.file_path, "some/file.feature");
-        assert_eq!(feature.tags.len(), 3);
-        assert_eq!(feature.tags[0], "@broken");
-        assert_eq!(feature.tags[1], "@slow");
-        assert_eq!(feature.tags[2], "@feature");
+            create_test_file(&dir, "test.feature", content).await.unwrap();
 
-        assert_eq!(scenarios.len(), 3);
-        assert!(Uuid::parse_str(&scenarios[0].id).is_ok());
-        assert_eq!(
-            scenarios[0].name,
-            r#""<user>" accesses "<query>" with "<shortcut>" on "<route>""#
-        );
-        assert_eq!(scenarios[0].description, "");
-        assert_eq!(scenarios[0].targets.len(), 0);
-        assert_eq!(scenarios[0].steps, 3);
-        assert_eq!(scenarios[0].examples, 3);
-        assert_eq!(scenarios[0].tags.len(), 5);
-        assert_eq!(scenarios[0].tags[0], "@billing");
-        assert_eq!(scenarios[0].tags[1], "@bicker");
-        assert_eq!(scenarios[0].tags[2], "@annoy");
-        assert_eq!(scenarios[0].tags[3], "@mobile");
-        assert_eq!(scenarios[0].tags[4], "@web");
-        assert_eq!(scenarios[0].feature_id, feature.id);
-        assert_eq!(scenarios[0].organization_name, "Some Org LLC");
+            let (features, scenarios) = get_all_features(dir.to_str().unwrap().to_string())
+                .await
+                .unwrap();
 
-        assert!(Uuid::parse_str(&scenarios[1].id).is_ok());
-        assert_eq!(scenarios[1].name, "Another scenario");
-        assert_eq!(scenarios[1].description, "");
-        assert_eq!(scenarios[0].targets.len(), 0);
-        assert_eq!(scenarios[1].steps, 3);
-        assert_eq!(scenarios[1].examples, 0);
-        assert_eq!(scenarios[1].tags.len(), 0);
-        assert_eq!(scenarios[1].feature_id, feature.id);
-        assert_eq!(scenarios[1].organization_name, "Some Org LLC");
+            assert_eq!(features.len(), 1);
+            assert_eq!(features[0].name, "Test feature");
+            assert_eq!(features[0].description, "This is a test description");
 
-        assert!(Uuid::parse_str(&scenarios[2].id).is_ok());
-        assert_eq!(scenarios[2].name, "Another with description");
-        assert_eq!(
-            scenarios[2].description,
-            "We are trying to do something here that will be awesome"
-        );
-        assert_eq!(scenarios[0].targets.len(), 0);
-        assert_eq!(scenarios[2].steps, 3);
-        assert_eq!(scenarios[2].examples, 0);
-        assert_eq!(scenarios[2].tags.len(), 0);
-        assert_eq!(scenarios[2].feature_id, feature.id);
-        assert_eq!(scenarios[2].organization_name, "Some Org LLC");
+            assert_eq!(scenarios.len(), 1);
+            assert_eq!(scenarios[0].name, "Test scenario");
+            assert_eq!(scenarios[0].organization_name, "Test Org");
+            assert_eq!(scenarios[0].steps, 3);
+        }
+
+        #[tokio::test]
+        async fn test_get_all_features_multiple_files() {
+            let temp = tempdir().unwrap();
+            let dir = temp.path();
+
+            let content1 = r#"
+                Feature: First feature
+                Description 1
+
+                Scenario: Scenario 1
+                    Given current organization is "Org 1"
+                    And user is on a "budgets" screen
+                    Then something happens
+            "#;
+
+            let content2 = r#"
+                Feature: Second feature
+                Description 2
+
+                Scenario: Scenario 2.1
+                    Given current organization is "Org 2"
+                    And user is on a "contacts" screen
+                    Then something happens
+
+                Scenario: Scenario 2.2
+                    Given current organization is "Org 2"
+                    And user is on a "dashboards" screen
+                    Then something happens
+            "#;
+
+            create_test_file(dir, "test1.feature", content1).await.unwrap();
+            create_test_file(dir, "test2.feature", content2).await.unwrap();
+
+            let dir_str = dir.to_string_lossy().into_owned();
+            let (features, scenarios) = get_all_features(dir_str)
+                .await
+                .unwrap();
+
+            assert_eq!(features.len(), 2);
+            assert_eq!(scenarios.len(), 3);
+
+            // // Create references to the expected strings
+            // let budgets_target = "budgets;/financials/budgets;;".to_string();
+            // let contacts_target = "contacts;/contacts/people;;".to_string();
+            // let dashboards_target = "dashboards;/dashboards;;".to_string();
+
+            // let scenario_targets: Vec<_> = scenarios
+            //     .iter()
+            //     .map(|s| s.targets.iter().next().unwrap_or(&"".to_string()))
+            //     .collect();
+
+            // // Pass references to contains()
+            // assert!(scenario_targets.contains(&&budgets_target));
+            // assert!(scenario_targets.contains(&&contacts_target));
+            // assert!(scenario_targets.contains(&&dashboards_target));
+        }
     }
 
-    #[test]
-    fn test_process_file_content_for_screens() {
-        let input = r#"
-            Feature: A feature with screens
+    mod feature_processing_tests {
+        use super::*;
 
-            Scenario: One good screen
-                Given current organization is "Some Org 1 LLC"
-                And user is on a "budgets" screen
+        #[tokio::test]
+        async fn test_process_file_content() {
+            let input = r#"
+                @broken @slow @feature
+                Feature: Feature name here
+                This is a feature description
+                broken into multiple lines
+                or something like that
 
-            Scenario: Two good screens
-                Given current organization is "Some Org 2 LLC"
-                And user is on a "companies" screen and flags "flag1,flag2" are enabled
-                And user is on a "contacts" screen on date "2024-10-01" and flag "flag3" is enabled
+                @billing @bicker @annoy
+                Scenario Outline: "<user>" accesses "<query>" with "<shortcut>" on "<route>"
+                    Given current organization is "Some Org LLC"
+                    And I do all the steps
+                    Then I should be in correct state
 
-            Scenario: Missing screen hashmap
-                Given current organization is "Some Org 3 LLC"
-                And user is on a "invalid" screen
+                    @mobile
+                    Examples:
+                    | user        | shortcut     | query          | route                             |
+                    | Admin       | # Tasks      | Test ta        | /tasks/task/116046                |
 
-            Scenario Outline: Malformed screen
-                Given current organization is <org>
-                And user is on a <name> screen on date <date> and flags <flags> are enabled
-            Examples:
-            | org   | name        | date          | flags         |
-            | org1  | invalid     | 2023-10-01    | flag1         |
-            | org2  | companies   | 2023-10-02    | flag2         |
-        "#;
-        let reader = Cursor::new(input);
-        let path = "some/file.feature".to_string();
-        let (feature, scenarios) = process_file_content(reader, path).unwrap();
+                    @web
+                    Examples:
+                    | user        | shortcut     | query          | route                             |
+                    | Admin       | ## Docs      | Project page   | /docs/doc/22981                   |
+                    | Admin       | $$ Budgets   | Test project   | /financials/budgets/d/deal/62326  |
 
-        assert!(Uuid::parse_str(&feature.id).is_ok());
-        assert_eq!(feature.name, "A feature with screens");
-        assert_eq!(feature.description, "");
-        assert_eq!(feature.file_path, "some/file.feature");
-        assert_eq!(feature.tags.len(), 0);
+                Scenario: Another scenario
+                    Given current organization is "Some Org LLC"
+                    And I do all the steps
+                    Then I should be in correct state
 
-        assert_eq!(scenarios.len(), 4);
-        assert!(Uuid::parse_str(&scenarios[0].id).is_ok());
-        assert_eq!(scenarios[0].name, "One good screen");
-        assert_eq!(scenarios[0].description, "");
-        assert_eq!(scenarios[0].targets.len(), 1);
-        assert_eq!(
-            scenarios[0].targets.iter().nth(0).unwrap(),
-            "budgets;/financials/budgets;;"
-        );
-        assert_eq!(scenarios[0].steps, 2);
-        assert_eq!(scenarios[0].examples, 0);
-        assert_eq!(scenarios[0].tags.len(), 0);
-        assert_eq!(scenarios[0].feature_id, feature.id);
-        assert_eq!(scenarios[0].organization_name, "Some Org 1 LLC");
+                Scenario: Another with description
+                    We are trying to do something here that will be awesome
 
-        assert!(Uuid::parse_str(&scenarios[1].id).is_ok());
-        assert_eq!(scenarios[1].name, "Two good screens");
-        assert_eq!(scenarios[1].description, "");
-        assert_eq!(scenarios[1].targets.len(), 2);
-        assert_eq!(
-            scenarios[1].targets.iter().nth(0).unwrap(),
-            "companies;/contacts/companies;flag1,flag2;"
-        );
-        assert_eq!(
-            scenarios[1].targets.iter().nth(1).unwrap(),
-            "contacts;/contacts/people;flag3;2024-10-01"
-        );
-        assert_eq!(scenarios[1].steps, 3);
-        assert_eq!(scenarios[1].examples, 0);
-        assert_eq!(scenarios[1].tags.len(), 0);
-        assert_eq!(scenarios[1].feature_id, feature.id);
-        assert_eq!(scenarios[1].organization_name, "Some Org 2 LLC");
+                    Given current organization is "Some Org LLC"
+                    And I do all the steps
+                    Then I should be in correct state
+                "#;
+            let reader = Cursor::new(input);
+            let path = "some/file.feature".to_string();
+            let (feature, scenarios) = process_file_content(reader, path).await.unwrap();
 
-        assert!(Uuid::parse_str(&scenarios[2].id).is_ok());
-        assert_eq!(scenarios[2].name, "Missing screen hashmap");
-        assert_eq!(scenarios[2].description, "");
-        assert_eq!(scenarios[2].targets.len(), 1);
-        assert_eq!(scenarios[2].targets.iter().nth(0).unwrap(), "invalid;;;");
-        assert_eq!(scenarios[2].steps, 2);
-        assert_eq!(scenarios[2].examples, 0);
-        assert_eq!(scenarios[2].tags.len(), 0);
-        assert_eq!(scenarios[2].feature_id, feature.id);
-        assert_eq!(scenarios[2].organization_name, "Some Org 3 LLC");
+            assert!(Uuid::parse_str(&feature.id).is_ok());
+            assert_eq!(feature.name, "Feature name here");
+            assert_eq!(
+                feature.description,
+                "This is a feature description broken into multiple lines or something like that"
+            );
+            assert_eq!(feature.file_path, "some/file.feature");
+            assert_eq!(feature.tags.len(), 3);
+            assert_eq!(feature.tags[0], "@broken");
+            assert_eq!(feature.tags[1], "@slow");
+            assert_eq!(feature.tags[2], "@feature");
 
-        assert!(Uuid::parse_str(&scenarios[3].id).is_ok());
-        assert_eq!(scenarios[3].name, "Malformed screen");
-        assert_eq!(scenarios[3].description, "");
-        assert_eq!(scenarios[3].targets.len(), 0);
-        assert_eq!(scenarios[3].steps, 2);
-        assert_eq!(scenarios[3].examples, 2);
-        assert_eq!(scenarios[3].tags.len(), 0);
-        assert_eq!(scenarios[3].feature_id, feature.id);
-        assert_eq!(scenarios[3].organization_name, "");
-    }
+            assert_eq!(scenarios.len(), 3);
+            assert!(Uuid::parse_str(&scenarios[0].id).is_ok());
+            assert_eq!(
+                scenarios[0].name,
+                r#""<user>" accesses "<query>" with "<shortcut>" on "<route>""#
+            );
+            assert_eq!(scenarios[0].description, "");
+            assert_eq!(scenarios[0].targets.len(), 0);
+            assert_eq!(scenarios[0].steps, 3);
+            assert_eq!(scenarios[0].examples, 3);
+            assert_eq!(scenarios[0].tags.len(), 5);
+            assert_eq!(scenarios[0].tags[0], "@billing");
+            assert_eq!(scenarios[0].tags[1], "@bicker");
+            assert_eq!(scenarios[0].tags[2], "@annoy");
+            assert_eq!(scenarios[0].tags[3], "@mobile");
+            assert_eq!(scenarios[0].tags[4], "@web");
+            assert_eq!(scenarios[0].feature_id, feature.id);
+            assert_eq!(scenarios[0].organization_name, "Some Org LLC");
 
-    #[test]
-    fn test_missing_feature_name() {
-        let content = r#"
-            @tag1 @tag2
-            Feature:
-                This is a sample feature description.
+            assert!(Uuid::parse_str(&scenarios[1].id).is_ok());
+            assert_eq!(scenarios[1].name, "Another scenario");
+            assert_eq!(scenarios[1].description, "");
+            assert_eq!(scenarios[0].targets.len(), 0);
+            assert_eq!(scenarios[1].steps, 3);
+            assert_eq!(scenarios[1].examples, 0);
+            assert_eq!(scenarios[1].tags.len(), 0);
+            assert_eq!(scenarios[1].feature_id, feature.id);
+            assert_eq!(scenarios[1].organization_name, "Some Org LLC");
 
-            Scenario: Sample Scenario
-                Given current organization is "Sample Org"
-                When something happens
-                Then something should be true
-        "#;
-        let reader = Cursor::new(content);
-        let path = "missing_feature_name.feature".to_string();
-        let (feature, scenarios) = process_file_content(reader, path).unwrap();
+            assert!(Uuid::parse_str(&scenarios[2].id).is_ok());
+            assert_eq!(scenarios[2].name, "Another with description");
+            assert_eq!(
+                scenarios[2].description,
+                "We are trying to do something here that will be awesome"
+            );
+            assert_eq!(scenarios[0].targets.len(), 0);
+            assert_eq!(scenarios[2].steps, 3);
+            assert_eq!(scenarios[2].examples, 0);
+            assert_eq!(scenarios[2].tags.len(), 0);
+            assert_eq!(scenarios[2].feature_id, feature.id);
+            assert_eq!(scenarios[2].organization_name, "Some Org LLC");
+        }
 
-        assert!(Uuid::parse_str(&feature.id).is_ok());
-        assert_eq!(feature.name, "");
-        assert_eq!(feature.description, "This is a sample feature description.");
-        assert_eq!(feature.file_path, "missing_feature_name.feature");
-        assert_eq!(feature.tags.len(), 2);
-        assert_eq!(feature.tags[0], "@tag1");
-        assert_eq!(feature.tags[1], "@tag2");
-        assert_eq!(scenarios.len(), 1);
-        assert_eq!(scenarios[0].name, "Sample Scenario");
-        assert_eq!(scenarios[0].description, "");
-        assert_eq!(scenarios[0].steps, 3);
-        assert_eq!(scenarios[0].examples, 0);
-        assert_eq!(scenarios[0].tags.len(), 0);
-        assert_eq!(scenarios[0].feature_id, feature.id);
-        assert_eq!(scenarios[0].organization_name, "Sample Org");
-    }
+        #[tokio::test]
+        async fn test_process_file_content_for_screens() {
+            let input = r#"
+                Feature: A feature with screens
 
-    #[test]
-    fn test_missing_scenario_name() {
-        let content = r#"
-            @tag1 @tag2
-            Feature: Sample Feature
-                This is a sample feature description.
+                Scenario: One good screen
+                    Given current organization is "Some Org 1 LLC"
+                    And user is on a "budgets" screen
 
-            Scenario:
-                Given current organization is "Sample Org"
-                When something happens
-                Then something should be true
-        "#;
-        let reader = std::io::Cursor::new(content);
-        let path = "missing_scenario_name.feature".to_string();
-        let (feature, scenarios) = process_file_content(reader, path).unwrap();
+                Scenario: Two good screens
+                    Given current organization is "Some Org 2 LLC"
+                    And user is on a "companies" screen and flags "flag1,flag2" are enabled
+                    And user is on a "contacts" screen on date "2024-10-01" and flag "flag3" is enabled
 
-        assert!(Uuid::parse_str(&feature.id).is_ok());
-        assert_eq!(feature.name, "Sample Feature");
-        assert_eq!(feature.description, "This is a sample feature description.");
-        assert_eq!(feature.file_path, "missing_scenario_name.feature");
-        assert_eq!(feature.tags.len(), 2);
-        assert_eq!(feature.tags[0], "@tag1");
-        assert_eq!(feature.tags[1], "@tag2");
-        assert_eq!(scenarios.len(), 1);
-        assert_eq!(scenarios[0].name, "");
-        assert_eq!(scenarios[0].description, "");
-        assert_eq!(scenarios[0].steps, 3);
-        assert_eq!(scenarios[0].examples, 0);
-        assert_eq!(scenarios[0].tags.len(), 0);
-        assert_eq!(scenarios[0].feature_id, feature.id);
-        assert_eq!(scenarios[0].organization_name, "Sample Org");
-    }
+                Scenario: Missing screen hashmap
+                    Given current organization is "Some Org 3 LLC"
+                    And user is on a "invalid" screen
 
-    #[test]
-    fn test_missing_feature_keyword() {
-        let content = r#"
-            @tag1 @tag2
-            Sample Feature
-                This is a sample feature description.
+                Scenario Outline: Malformed screen
+                    Given current organization is <org>
+                    And user is on a <name> screen on date <date> and flags <flags> are enabled
+                Examples:
+                | org   | name        | date          | flags         |
+                | org1  | invalid     | 2023-10-01    | flag1         |
+                | org2  | companies   | 2023-10-02    | flag2         |
+            "#;
+            let reader = Cursor::new(input);
+            let path = "some/file.feature".to_string();
+            let (feature, scenarios) = process_file_content(reader, path).await.unwrap();
 
-            Scenario: Sample Scenario
-                Given current organization is "Sample Org"
-                When something happens
-                Then something should be true
-        "#;
-        let reader = Cursor::new(content);
-        let path = "missing_feature_keyword.feature".to_string();
-        let (feature, scenarios) = process_file_content(reader, path).unwrap();
+            assert!(Uuid::parse_str(&feature.id).is_ok());
+            assert_eq!(feature.name, "A feature with screens");
+            assert_eq!(feature.description, "");
+            assert_eq!(feature.file_path, "some/file.feature");
+            assert_eq!(feature.tags.len(), 0);
 
-        assert!(Uuid::parse_str(&feature.id).is_ok());
-        assert_eq!(feature.name, "");
-        assert_eq!(feature.description, "");
-        assert_eq!(feature.file_path, "missing_feature_keyword.feature");
-        assert_eq!(feature.tags.len(), 0);
-        assert_eq!(scenarios.len(), 0);
-    }
+            assert_eq!(scenarios.len(), 4);
+            assert!(Uuid::parse_str(&scenarios[0].id).is_ok());
+            assert_eq!(scenarios[0].name, "One good screen");
+            assert_eq!(scenarios[0].description, "");
+            assert_eq!(scenarios[0].targets.len(), 1);
+            assert_eq!(
+                scenarios[0].targets.iter().nth(0).unwrap(),
+                "budgets;/financials/budgets;;"
+            );
+            assert_eq!(scenarios[0].steps, 2);
+            assert_eq!(scenarios[0].examples, 0);
+            assert_eq!(scenarios[0].tags.len(), 0);
+            assert_eq!(scenarios[0].feature_id, feature.id);
+            assert_eq!(scenarios[0].organization_name, "Some Org 1 LLC");
 
-    #[test]
-    fn test_missing_scenario_keyword() {
-        let content = r#"
-            @tag1 @tag2
-            Feature: Sample Feature
-                This is a sample feature description.
+            assert!(Uuid::parse_str(&scenarios[1].id).is_ok());
+            assert_eq!(scenarios[1].name, "Two good screens");
+            assert_eq!(scenarios[1].description, "");
+            assert_eq!(scenarios[1].targets.len(), 2);
+            assert_eq!(
+                scenarios[1].targets.iter().nth(0).unwrap(),
+                "companies;/contacts/companies;flag1,flag2;"
+            );
+            assert_eq!(
+                scenarios[1].targets.iter().nth(1).unwrap(),
+                "contacts;/contacts/people;flag3;2024-10-01"
+            );
+            assert_eq!(scenarios[1].steps, 3);
+            assert_eq!(scenarios[1].examples, 0);
+            assert_eq!(scenarios[1].tags.len(), 0);
+            assert_eq!(scenarios[1].feature_id, feature.id);
+            assert_eq!(scenarios[1].organization_name, "Some Org 2 LLC");
 
-            Sample Scenario
-                Given current organization is "Sample Org"
-                When something happens
-                Then something should be true
-        "#;
-        let reader = Cursor::new(content);
-        let path = "missing_scenario_keyword.feature".to_string();
-        let (feature, scenarios) = process_file_content(reader, path).unwrap();
+            assert!(Uuid::parse_str(&scenarios[2].id).is_ok());
+            assert_eq!(scenarios[2].name, "Missing screen hashmap");
+            assert_eq!(scenarios[2].description, "");
+            assert_eq!(scenarios[2].targets.len(), 1);
+            assert_eq!(scenarios[2].targets.iter().nth(0).unwrap(), "invalid;;;");
+            assert_eq!(scenarios[2].steps, 2);
+            assert_eq!(scenarios[2].examples, 0);
+            assert_eq!(scenarios[2].tags.len(), 0);
+            assert_eq!(scenarios[2].feature_id, feature.id);
+            assert_eq!(scenarios[2].organization_name, "Some Org 3 LLC");
 
-        assert!(Uuid::parse_str(&feature.id).is_ok());
-        assert_eq!(feature.name, "Sample Feature");
-        assert_eq!(
-            feature.description,
-            "This is a sample feature description. Sample Scenario"
-        );
-        assert_eq!(feature.file_path, "missing_scenario_keyword.feature");
-        assert_eq!(feature.tags.len(), 2);
-        assert_eq!(feature.tags[0], "@tag1");
-        assert_eq!(feature.tags[1], "@tag2");
-        assert_eq!(scenarios.len(), 0);
-    }
+            assert!(Uuid::parse_str(&scenarios[3].id).is_ok());
+            assert_eq!(scenarios[3].name, "Malformed screen");
+            assert_eq!(scenarios[3].description, "");
+            assert_eq!(scenarios[3].targets.len(), 0);
+            assert_eq!(scenarios[3].steps, 2);
+            assert_eq!(scenarios[3].examples, 2);
+            assert_eq!(scenarios[3].tags.len(), 0);
+            assert_eq!(scenarios[3].feature_id, feature.id);
+            assert_eq!(scenarios[3].organization_name, "");
+        }
 
-    #[test]
-    fn test_incorrect_feature_file() {
-        let content = r#"
-            Here is some random text that is not a feature file
-            Here is some random text that is not a feature file
-            Here is some random text that is not a feature file
-            Here is some random text that is not a feature file
-            Here is some random text that is not a feature file
-            Here is some random text that is not a feature file
-            Here is some random text that is not a feature file
-            Here is some random text that is not a feature file
-        "#;
-        let reader = Cursor::new(content);
-        let path = "incorrect.feature".to_string();
-        let (feature, scenarios) = process_file_content(reader, path).unwrap();
+        #[tokio::test]
+        async fn test_missing_feature_name() {
+            let content = r#"
+                @tag1 @tag2
+                Feature:
+                    This is a sample feature description.
 
-        assert!(Uuid::parse_str(&feature.id).is_ok());
-        assert_eq!(feature.name, "");
-        assert_eq!(feature.description, "");
-        assert_eq!(feature.file_path, "incorrect.feature");
-        assert_eq!(feature.tags.len(), 0);
-        assert_eq!(scenarios.len(), 0);
+                Scenario: Sample Scenario
+                    Given current organization is "Sample Org"
+                    When something happens
+                    Then something should be true
+            "#;
+            let reader = Cursor::new(content);
+            let path = "missing_feature_name.feature".to_string();
+            let (feature, scenarios) = process_file_content(reader, path).await.unwrap();
+
+            assert!(Uuid::parse_str(&feature.id).is_ok());
+            assert_eq!(feature.name, "");
+            assert_eq!(feature.description, "This is a sample feature description.");
+            assert_eq!(feature.file_path, "missing_feature_name.feature");
+            assert_eq!(feature.tags.len(), 2);
+            assert_eq!(feature.tags[0], "@tag1");
+            assert_eq!(feature.tags[1], "@tag2");
+            assert_eq!(scenarios.len(), 1);
+            assert_eq!(scenarios[0].name, "Sample Scenario");
+            assert_eq!(scenarios[0].description, "");
+            assert_eq!(scenarios[0].steps, 3);
+            assert_eq!(scenarios[0].examples, 0);
+            assert_eq!(scenarios[0].tags.len(), 0);
+            assert_eq!(scenarios[0].feature_id, feature.id);
+            assert_eq!(scenarios[0].organization_name, "Sample Org");
+        }
+
+        #[tokio::test]
+        async fn test_missing_scenario_name() {
+            let content = r#"
+                @tag1 @tag2
+                Feature: Sample Feature
+                    This is a sample feature description.
+
+                Scenario:
+                    Given current organization is "Sample Org"
+                    When something happens
+                    Then something should be true
+            "#;
+            let reader = std::io::Cursor::new(content);
+            let path = "missing_scenario_name.feature".to_string();
+            let (feature, scenarios) = process_file_content(reader, path).await.unwrap();
+
+            assert!(Uuid::parse_str(&feature.id).is_ok());
+            assert_eq!(feature.name, "Sample Feature");
+            assert_eq!(feature.description, "This is a sample feature description.");
+            assert_eq!(feature.file_path, "missing_scenario_name.feature");
+            assert_eq!(feature.tags.len(), 2);
+            assert_eq!(feature.tags[0], "@tag1");
+            assert_eq!(feature.tags[1], "@tag2");
+            assert_eq!(scenarios.len(), 1);
+            assert_eq!(scenarios[0].name, "");
+            assert_eq!(scenarios[0].description, "");
+            assert_eq!(scenarios[0].steps, 3);
+            assert_eq!(scenarios[0].examples, 0);
+            assert_eq!(scenarios[0].tags.len(), 0);
+            assert_eq!(scenarios[0].feature_id, feature.id);
+            assert_eq!(scenarios[0].organization_name, "Sample Org");
+        }
+
+        #[tokio::test]
+        async fn test_missing_feature_keyword() {
+            let content = r#"
+                @tag1 @tag2
+                Sample Feature
+                    This is a sample feature description.
+
+                Scenario: Sample Scenario
+                    Given current organization is "Sample Org"
+                    When something happens
+                    Then something should be true
+            "#;
+            let reader = Cursor::new(content);
+            let path = "missing_feature_keyword.feature".to_string();
+            let (feature, scenarios) = process_file_content(reader, path).await.unwrap();
+
+            assert!(Uuid::parse_str(&feature.id).is_ok());
+            assert_eq!(feature.name, "");
+            assert_eq!(feature.description, "");
+            assert_eq!(feature.file_path, "missing_feature_keyword.feature");
+            assert_eq!(feature.tags.len(), 0);
+            assert_eq!(scenarios.len(), 0);
+        }
+
+        #[tokio::test]
+        async fn test_missing_scenario_keyword() {
+            let content = r#"
+                @tag1 @tag2
+                Feature: Sample Feature
+                    This is a sample feature description.
+
+                Sample Scenario
+                    Given current organization is "Sample Org"
+                    When something happens
+                    Then something should be true
+            "#;
+            let reader = Cursor::new(content);
+            let path = "missing_scenario_keyword.feature".to_string();
+            let (feature, scenarios) = process_file_content(reader, path).await.unwrap();
+
+            assert!(Uuid::parse_str(&feature.id).is_ok());
+            assert_eq!(feature.name, "Sample Feature");
+            assert_eq!(
+                feature.description,
+                "This is a sample feature description. Sample Scenario"
+            );
+            assert_eq!(feature.file_path, "missing_scenario_keyword.feature");
+            assert_eq!(feature.tags.len(), 2);
+            assert_eq!(feature.tags[0], "@tag1");
+            assert_eq!(feature.tags[1], "@tag2");
+            assert_eq!(scenarios.len(), 0);
+        }
+
+        #[tokio::test]
+        async fn test_incorrect_feature_file() {
+            let content = r#"
+                Here is some random text that is not a feature file
+                Here is some random text that is not a feature file
+                Here is some random text that is not a feature file
+                Here is some random text that is not a feature file
+                Here is some random text that is not a feature file
+                Here is some random text that is not a feature file
+                Here is some random text that is not a feature file
+                Here is some random text that is not a feature file
+            "#;
+            let reader = Cursor::new(content);
+            let path = "incorrect.feature".to_string();
+            let (feature, scenarios) = process_file_content(reader, path).await.unwrap();
+
+            assert!(Uuid::parse_str(&feature.id).is_ok());
+            assert_eq!(feature.name, "");
+            assert_eq!(feature.description, "");
+            assert_eq!(feature.file_path, "incorrect.feature");
+            assert_eq!(feature.tags.len(), 0);
+            assert_eq!(scenarios.len(), 0);
+        }
     }
 }

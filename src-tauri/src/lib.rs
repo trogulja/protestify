@@ -6,9 +6,10 @@ mod organizations_reader;
 
 use serde_json::json;
 
-#[tauri::command]
-fn get_features(base_path: &str) -> serde_json::Value {
-    match features_reader::get_all_features(base_path) {
+#[tauri::command(async)]
+async fn get_features(base_path: String) -> serde_json::Value {
+    let result = features_reader::get_all_features(base_path).await;
+    match result {
         Ok((features, scenarios)) => json!({ "features": features, "scenarios": scenarios }),
         Err(e) => json!({ "err": e.to_string() }),
     }
@@ -25,19 +26,19 @@ fn get_organizations(file_path: &str) -> serde_json::Value {
     }
 }
 
-#[tauri::command]
-fn find_e2e_repo() -> serde_json::Value {
+#[tauri::command(async)]
+async fn find_e2e_repo() -> serde_json::Value {
     let entry_dir: Option<&str> = None;
 
-    match e2e_locator::locate_e2e_repo(entry_dir) {
+    match e2e_locator::locate_e2e_repo(entry_dir).await {
         Ok(results) => json!({ "ok": results }),
         Err(e) => json!({ "err": e }),
     }
 }
 
-#[tauri::command]
-fn validate_e2e_repo(path: &str) -> bool {
-    e2e_locator::is_target_valid(path)
+#[tauri::command(async)]
+async fn validate_e2e_repo(path: String) -> bool {
+    e2e_locator::is_target_valid(&path).await
 }
 
 #[tauri::command]
