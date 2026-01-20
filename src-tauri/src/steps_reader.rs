@@ -18,14 +18,19 @@ pub struct StepDefinition {
 
 /// Parse all step definition files in the given directory
 pub fn parse_step_definitions(base_path: &str) -> Result<Vec<StepDefinition>, String> {
-    let step_defs_path = Path::new(base_path).join("step_definitions");
+    let step_defs_path = Path::new(base_path).join("step-definitions");
 
     if !step_defs_path.exists() {
-        return Err("step_definitions folder not found".to_string());
+        return Err(format!(
+            "step_definitions folder not found at: {}",
+            step_defs_path.display()
+        ));
     }
 
     let mut steps = Vec::new();
-    let step_regex = Regex::new(r#"(Given|When|Then|And|But)\s*\(\s*/(.+?)/[^,]*,"#).unwrap();
+    // Match both regex patterns /.../ and string patterns '...' or "..."
+    // Also handle optional generic type like <ScenarioContext>
+    let step_regex = Regex::new(r#"(Given|When|Then|And|But)(?:<[^>]*>)?\s*\(\s*(?:/(.+?)/|['"](.+?)['"])"#).unwrap();
 
     for entry in WalkDir::new(&step_defs_path)
         .into_iter()
@@ -41,7 +46,16 @@ pub fn parse_step_definitions(base_path: &str) -> Result<Vec<StepDefinition>, St
                 for (line_number, line) in content.lines().enumerate() {
                     if let Some(captures) = step_regex.captures(line) {
                         let keyword = captures.get(1).unwrap().as_str().to_string();
-                        let pattern = captures.get(2).unwrap().as_str().to_string();
+                        // Pattern is either in group 2 (regex /.../) or group 3 (string '...' or "...")
+                        let pattern = captures
+                            .get(2)
+                            .or_else(|| captures.get(3))
+                            .map(|m| m.as_str().to_string())
+                            .unwrap_or_default();
+
+                        if pattern.is_empty() {
+                            continue;
+                        }
 
                         let category = categorize_step(&pattern, &keyword);
                         let (is_problematic, problem_reason) = check_problematic(&pattern);

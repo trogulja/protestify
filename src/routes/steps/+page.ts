@@ -14,7 +14,7 @@ export async function load() {
   }
 
   const result = await invoke<{ ok: StepDefinition[] } | InvokeErr>('get_steps', {
-    basePath: `${basePath}/features`,
+    basePath,
   });
 
   if (isInvokeErr(result)) {
